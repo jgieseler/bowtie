@@ -1,5 +1,5 @@
 matplotlib
-numpy=
+numpy
 pandas
 pytest
 scipy
