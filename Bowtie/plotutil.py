@@ -15,7 +15,7 @@ def setup_latex(rcParams, no_fourier=False):
     :param rcParams: rcParams imported locally from matplotlib
     :param no_fourier: True if there is no fourier package in your LaTeX distribution and it is impossible to install it (e.g. on Dione)
     """
-    rcParams['text.usetex'] = True
+    rcParams['text.usetex'] = False
     if no_fourier:
         rcParams['text.latex.preamble'] = r'\usepackage{amsmath}' + '\n' + r'\usepackage{amssymb}' + '\n' + r'\usepackage{graphicx}'
     else:
