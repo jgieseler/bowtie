@@ -6,7 +6,7 @@ __author__ = "Christian Palmroos"
 __credits__ = ["Christian Palmroos", "Philipp Oleynik"]
 
 from . import bowtie_util
-from . import bowtie 
+from . import bowtie_calc 
 
 class Spectra:
     """
@@ -48,7 +48,7 @@ class Spectra:
         grid = response_matrix[0]["grid"]
 
         # Generates the power law spectra
-        power_law_spectra = bowtie.generate_exppowlaw_spectra(energy_grid_dict=grid, gamma_pow_min=self.gamma_min,
+        power_law_spectra = bowtie_calc.generate_exppowlaw_spectra(energy_grid_dict=grid, gamma_pow_min=self.gamma_min,
                                                               gamma_pow_max=self.gamma_max, num_steps=self.gamma_steps,
                                                               cutoff_energy=self.cutoff_energy)
 

@@ -185,7 +185,7 @@ def fold_spectrum_np(*, grid=None, spectrum=None, response=None):
     if spectrum is None or response is None:
         return 0
     if (len(spectrum) == len(response)) and (len(spectrum) == len(grid['midpt'])):
-        result = np.trapz(np.multiply(spectrum, response), grid['midpt'])
+        result = np.trapezoid(np.multiply(spectrum, response), grid['midpt'])
         return result
     else:
         return 0
