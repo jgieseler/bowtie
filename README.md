@@ -1,16 +1,38 @@
-# The bowtie analysis tool
----
+# SPEARHEAD bowtie analysis tool
+
+- [About](#about)
+- [How to install](#how-to-install)
+- [How to use](#how-to-use)
+- [Contributing](#contributing)
+- [Acknowledgement](#acknowledgement)
+
+## About
 
 This analysis tool runs bowtie analysis for particle instruments' energy channels.
 The input is a csv table of channel responses indexed by the incident energy.
 The results of analysis are the geometric factor (with errors) and the
 effective energy of the channel.
 
+*Tested in Ubuntu 20.04.6 LTS with Python version 3.12.8.*
+
+## How to install
+
+1. This tool requires a recent Python (>=3.10) installation. [Following SunPy's approach, we recommend installing Python via miniforge (click for instructions).](https://docs.sunpy.org/en/stable/tutorial/installation.html#installing-python)
+2. [Download this file](https://github.com/spearhead-he/bowtie/archive/refs/heads/main.zip) and extract to a folder of your choice (or clone the repository [https://github.com/spearhead-he/bowtie](https://github.com/spearhead-he/bowtie) if you know how to use `git`).
+3. Open a terminal or the miniforge prompt and move to the directory where the code is.
+4. *(Optional, but recommended)* Create a new virtual environment (e.g., `conda create --name bowtie`, or `python -m venv venv_bowtie_tool` if you don't use miniforge/conda) and activate it (e.g., `conda activate bowtie`, or `source venv_bowtie_tool/bin/activate` if you don't use miniforge/conda).
+5. Install the Python dependencies from the *requirements.txt* file with `pip install -r requirements.txt`
+6. Open the Jupyter Notebook by running `jupyter-lab bowtie_example.ipynb`
+
+## How to use
+
+The notebook is a simple example that also acts as a tutorial to teach the user on how to run bowtie analysis with this package.
+
 The package operates with two main classes, which are called `Bowtie` and `Spectra`. `Bowtie` stores 
 response functions and contains the methods to run bowtie analysis, while `Spectra` contains the 
 information of the spectral indices and the amount of different spectra that are used in the bowtie calculation.
 
-Bowtie
+### Bowtie
 ---
 The `Bowtie` class contains the data that the bowtie analysis is applied on, and the energy range to be
 considered in the calculations. Its methods make running analysis easy and straightforward.
@@ -32,7 +54,7 @@ Methods:
  		spectra : {Spectra} See bowtie_analysis().
    		plot : {bool} See bowtie_analysis()
 
-Spectra
+### Spectra
 ---
 The `Spectra` class contains the range of spectra that are applied on the response function to run 
 bowtie analysis.
@@ -46,3 +68,18 @@ Methods:
  	produce_power_law_spectra(response_df):
   		response_df : {pandas.DataFrame} The input csv table read in to a pandas DataFrame. Contains
 										 the channel responses as a function of incident energy.
+
+## Contributing
+
+Contributions to this tool are very much welcome and encouraged! Contributions can take the form of [issues](https://github.com/spearhead-he/bowtie/issues) to report bugs and request new features or [pull requests](https://github.com/spearhead-he/bowtie/pulls) to submit new code. 
+
+If you don't have a GitHub account, you can [sign-up for free here](https://github.com/signup), or you can also reach out to us with feedback by sending an email to jan.gieseler@utu.fi.
+
+## Acknowledgement
+
+<img align="right" height="80px" src="https://github.com/user-attachments/assets/28c60e00-85b4-4cf3-a422-6f0524c42234"> 
+<img align="right" height="80px" src="https://github.com/user-attachments/assets/854d45ef-8b25-4a7b-9521-bf8bc364246e"> 
+
+This tool is developed within the SPEARHEAD (*SPEcification, Analysis & Re-calibration of High Energy pArticle Data*) project. SPEARHEAD has received funding from the European Union’s Horizon Europe programme under grant agreement No 101135044. 
+
+The tool reflects only the authors’ view and the European Commission is not responsible for any use that may be made of the information it contains.
