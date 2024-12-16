@@ -10,7 +10,7 @@ import pandas as pd
 
 from matplotlib import pyplot as plt
 
-from . import bowtie
+from . import bowtie_calc
 
 
 def read_npy_vault(vault_name):
