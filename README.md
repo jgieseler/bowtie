@@ -1,4 +1,7 @@
-# SPEARHEAD bowtie analysis tool
+[![pytest](https://github.com/spearhead-he/bowtie/actions/workflows/pytest.yml/badge.svg?branch=main)](https://github.com/spearhead-he/bowtie/actions/workflows/pytest.yml)
+[![codecov](https://codecov.io/github/spearhead-he/bowtie/graph/badge.svg?token=JZ0QJ7PUU6)](https://codecov.io/github/spearhead-he/bowtie)
+
+# SPEARHEAD bow-tie analysis tool
 
 - [About](#about)
 - [How to install](#how-to-install)
@@ -8,10 +11,7 @@
 
 ## About
 
-This analysis tool runs bowtie analysis for particle instruments' energy channels.
-The input is a csv table of channel responses indexed by the incident energy.
-The results of analysis are the geometric factor (with errors) and the
-effective energy of the channel.
+This analysis tool runs a bow-tie analysis ([Van Allen et al. 1974](https://doi.org/10.1029/JA079i025p03559)) for the energy channels of a generic particle instrument. The input is a csv table of channel responses indexed by the incident energy. The results of analysis are the geometric factor (with errors) and the effective energy of the channel.
 
 *Tested in Ubuntu 20.04.6 LTS with Python version 3.12.8.*
 
@@ -26,16 +26,13 @@ effective energy of the channel.
 
 ## How to use
 
-The notebook is a simple example that also acts as a tutorial to teach the user on how to run bowtie analysis with this package.
+The Notebook is a simple example that also acts as a tutorial to teach the user on how to run the bow-tie analysis with this tool.
 
-The package operates with two main classes, which are called `Bowtie` and `Spectra`. `Bowtie` stores 
-response functions and contains the methods to run bowtie analysis, while `Spectra` contains the 
-information of the spectral indices and the amount of different spectra that are used in the bowtie calculation.
+The tool operates with two main classes, which are called `Bowtie` and `Spectra`. `Bowtie` stores response functions and contains the methods to run bow-tie analysis, while `Spectra` contains the information of the spectral indices and the amount of different spectra that are used in the bow-tie calculation.
 
 ### Bowtie
 ---
-The `Bowtie` class contains the data that the bowtie analysis is applied on, and the energy range to be
-considered in the calculations. Its methods make running analysis easy and straightforward.
+The `Bowtie` class contains the data that the bow-tie analysis is applied on, and the energy range to be considered in the calculations. Its methods make running analysis easy and straightforward.
 
 Methods:
 #
@@ -46,7 +43,7 @@ Methods:
  	bowtie_analysis(channel, spectra, plot):
   		channel : {str} The channel name as it appears in the csv table.
 		spectra : {Spectra} The Spectra class object, introduced in this package. Contains the 
-  							spectral indices and the power law spectra used in the bowtie analysis.
+  							spectral indices and the power law spectra used in the bow-tie analysis.
   		plot : {bool} A boolean switch to produce a plot visualizing the analysis.
 #
 	bowtie_analysis_full_stack(spectra, plot):
@@ -56,8 +53,7 @@ Methods:
 
 ### Spectra
 ---
-The `Spectra` class contains the range of spectra that are applied on the response function to run 
-bowtie analysis.
+The `Spectra` class contains the range of spectra that are applied on the response function to run bow-tie analysis.
 
 Methods:
 #
