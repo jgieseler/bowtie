@@ -1,4 +1,5 @@
 import filecmp
+import math
 import matplotlib
 import os
 import pytest
@@ -51,8 +52,10 @@ def test_bowtie():
     new_e1_results = bowtie.bowtie_analysis(channel=channel, spectra=spectra, plot=False)
 
     assert new_e1_results['geometric_factor'] == 0.000744084026271278
-    assert new_e1_results['geometric_factor_errors'] == {'gfup': np.float64(4.407576153642298e-05), 'gflo': np.float64(3.07655324791197e-05)}
-    assert new_e1_results['effective_energy'] == np.float64(0.0713699882077903)
+
+    assert math.isclose(new_e1_results['geometric_factor_errors']['gfup'], np.float64(4.407576153642298e-05))
+    assert math.isclose(new_e1_results['geometric_factor_errors']['gflo'], np.float64(3.07655324791197e-05))
+    assert math.isclose(new_e1_results['effective_energy'], np.float64(0.0713699882077903))
     # assert new_e1_results['fig'] == 
     # assert new_e1_results['axes'] ==
 
@@ -62,8 +65,10 @@ def test_bowtie():
 
     # only check the last result
     assert all_channels_results[6]['geometric_factor'] == 0.2955529518148398
-    assert all_channels_results[6]['geometric_factor_errors'] == {'gfup': np.float64(0.027996508853041446), 'gflo': np.float64(0.01830299979208344)}
-    assert all_channels_results[6]['effective_energy'] == np.float64(7.0097596149373445)
+    # assert all_channels_results[6]['geometric_factor_errors'] == {'gfup': np.float64(0.027996508853041446), 'gflo': np.float64(0.01830299979208344)}
+    assert math.isclose(all_channels_results[6]['geometric_factor_errors']['gfup'], np.float64(0.027996508853041446))
+    assert math.isclose(all_channels_results[6]['geometric_factor_errors']['gflo'], np.float64(0.01830299979208344))
+    assert math.isclose(all_channels_results[6]['effective_energy'], np.float64(7.0097596149373445))
     # assert all_channels_results[6]['fig'] == 
     # assert all_channels_results[6]['axes'] ==
 
