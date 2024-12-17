@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/901850215.svg)](https://doi.org/10.5281/zenodo.14505386)
 [![pytest](https://github.com/spearhead-he/bowtie/actions/workflows/pytest.yml/badge.svg?branch=main)](https://github.com/spearhead-he/bowtie/actions/workflows/pytest.yml)
 [![codecov](https://codecov.io/github/spearhead-he/bowtie/graph/badge.svg?token=JZ0QJ7PUU6)](https://codecov.io/github/spearhead-he/bowtie)
 
