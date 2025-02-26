@@ -73,7 +73,7 @@ def set_log_axes(axes: plt.Axes, aset=False, aspect=0.36):
         plt.Axes.set_aspect(axes, aspect=aspect, adjustable='box')
 
 
-def set_log_axes_simple(axes: plt.Axes):
+def set_log_axes_simple(axes: plt.Axes, grid:bool):
     """
     The same as set_log_axes_noaspect, but without setting X-axis ticks.
     :param axes: an Axis object to operate on.
@@ -81,7 +81,8 @@ def set_log_axes_simple(axes: plt.Axes):
     axes.tick_params(direction='in', which='both', zorder=4)
     axes.set_xscale("log", nonpositive='clip', subs=[2, 3, 4, 5, 6, 7, 8, 9])
     axes.set_yscale("log", nonpositive='clip')
-    axes.grid(True, which='both', alpha=0.3, zorder=0)
+    if grid:
+        axes.grid(True, which='both', alpha=0.3, zorder=0)
 
 
 def set_time_log_axes_simple(axes: plt.Axes):
