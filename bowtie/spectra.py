@@ -39,8 +39,8 @@ class Spectra:
     def produce_power_law_spectra(self, response_df) -> None:
         """
         Produces a list of spectra, that are needed for bowtie analysis.
-        
-        Returns a list of dictionaries containing values for each spectrum.
+
+        Saves a list of dictionaries containing values for each spectrum to a class attribute "power_law_spectra".
         """
 
         # The incident energies are needed in a specific format, which is taken care of here.
