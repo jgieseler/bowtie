@@ -53,10 +53,10 @@ def plot_multi_geometric(geometric_factors, response_data,
     plu.set_log_axes_simple(ax, grid=False)
 
     if integral:
-        ax.set_ylabel(r'G(E) [${\rm cm}^2\,{\rm sr}$]', fontsize=DEFAULT_AXIS_LABEL_SIZE, color='black')
+        ax.set_ylabel(r'G(E) [cm$^2$ sr]', fontsize=DEFAULT_AXIS_LABEL_SIZE, color='black')
         subax.set_xlabel(r'Threshold energy, MeV', fontsize=DEFAULT_AXIS_LABEL_SIZE, color='black')
     else:
-        ax.set_ylabel(r'G$\delta$E [${\rm cm}^2\,{\rm sr}\,{\rm MeV}$]', fontsize=DEFAULT_AXIS_LABEL_SIZE, color='black')
+        ax.set_ylabel(r'G$\delta$E [cm$^2$ sr MeV]', fontsize=DEFAULT_AXIS_LABEL_SIZE, color='black')
         subax.set_xlabel(r'Effective energy [MeV]', fontsize=DEFAULT_AXIS_LABEL_SIZE, color='black')
     gamma_steps_ = geometric_factors.shape[0]
     energy_steps_ = geometric_factors.shape[1]
@@ -81,7 +81,7 @@ def plot_multi_geometric(geometric_factors, response_data,
 
     # Plotting the response function and setting the axis
     ax1.set_yscale("log")
-    ax1.tick_params(which="both", direction="out", color=RESPONSE_AXIS_COLOR, labelcolor=RESPONSE_AXIS_COLOR)
+    ax1.tick_params(which="both", direction="in", color=RESPONSE_AXIS_COLOR, labelcolor=RESPONSE_AXIS_COLOR)
     ax1.set_ylabel(r"Response [cm$^2$ sr]", color=RESPONSE_AXIS_COLOR, fontsize=DEFAULT_AXIS_LABEL_SIZE)
     ax1.plot(response_data['grid']['midpt'], response_data['resp'], c=RESPONSE_AXIS_COLOR)
 

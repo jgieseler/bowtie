@@ -20,7 +20,7 @@ def setup_latex(rcParams, no_fourier=False):
         rcParams['text.latex.preamble'] = r'\usepackage{amsmath}' + '\n' + r'\usepackage{amssymb}' + '\n' + r'\usepackage{graphicx}'
     else:
         rcParams['text.latex.preamble'] = r'\usepackage{amsmath}' + '\n' + r'\usepackage{amssymb}' + '\n' + r'\usepackage{graphicx}' + '\n' + r'\usepackage{fourier}'
-        rcParams['font.family'] = 'Open Sans'
+        rcParams['font.family'] = 'sans-serif'
         rcParams['font.serif'] = 'TeX Gyre Bonum Math'
         rcParams['figure.dpi'] = 120
         rcParams['savefig.dpi'] = 300
