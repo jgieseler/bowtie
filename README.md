@@ -12,7 +12,7 @@
 
 ## About
 
-This analysis tool runs a bow-tie analysis ([Van Allen et al. 1974](https://doi.org/10.1029/JA079i025p03559)) for the energy channels of a generic particle instrument. The input is a CSV table of channel responses indexed by the incident energy. The analysis results are the geometric factor (with errors) and the effective energy of the channel. The analysis description may be found here ([A description of the BepiColombo/SIXS-P cruise phase data product](https://doi.org/10.5281/zenodo.13692883)).
+This analysis tool runs a bow-tie analysis ([Van Allen et al. 1974](https://doi.org/10.1029/JA079i025p03559)) for the energy channels of a generic particle instrument. The input is a CSV table of channel responses indexed by the incident energy. The analysis results are the geometric factor (with errors) and the effective energy of the channel. The analysis description may be found here ([A description of the BepiColombo/SIXS-P cruise phase data product](https://doi.org/10.5281/zenodo.13692883)). The instrument response may be obtained by simulation, analytical model, or measurement and presented as a discrete function on an energy grid. The only requirement is that the grid must be monotonously ascending.
 
 *Tested in Ubuntu 20.04.6 LTS with Python version 3.12.8.*
 
