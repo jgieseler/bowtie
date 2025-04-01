@@ -4,7 +4,7 @@ A module for the bow-tie (https://www.utupub.fi/handle/10024/152846 and referenc
 analysis of a response function of a particle instrument.
 """
 __author__ = "Philipp Oleynik"
-__credits__ = ["Philipp Oleynik"]
+__credits__ = ["Philipp Oleynik", "Christian Palmroos"]
 
 import math
 from matplotlib import rcParams
@@ -18,6 +18,9 @@ from statistics import geometric_mean
 
 from . import plotutil as plu
 
+RESPONSE_AXIS_COLOR = "blue"
+DEFAULT_TITLE_FONTSIZE = 18
+DEFAULT_AXIS_LABEL_SIZE = 14
 
 def plot_multi_geometric(geometric_factors, response_data,
                          emin=1.0, emax=100.0, gmin=1.0E-15, gmax=1.0E10,
@@ -47,13 +50,14 @@ def plot_multi_geometric(geometric_factors, response_data,
     rcParams["figure.figsize"] = [6.4, 4.8]
     grid_kws = {"height_ratios": (0.7, 0.3), "hspace": .1}
     fig, (ax, subax) = plt.subplots(2, sharex='col', sharey='none', gridspec_kw=grid_kws)
-    plu.set_log_axes_simple(ax)
+    plu.set_log_axes_simple(ax, grid=False)
+
     if integral:
-        ax.set_ylabel(r'G(E) [${\rm cm}^2\,{\rm sr}$]', fontsize=14, color='black')
-        subax.set_xlabel(r'Threshold energy, MeV', fontsize=14, color='black')
+        ax.set_ylabel(r'G(E) [cm$^2$ sr]', fontsize=DEFAULT_AXIS_LABEL_SIZE, color='black')
+        subax.set_xlabel(r'Threshold energy, MeV', fontsize=DEFAULT_AXIS_LABEL_SIZE, color='black')
     else:
-        ax.set_ylabel(r'G$\delta$E [${\rm cm}^2\,{\rm sr}\,{\rm MeV}$]', fontsize=14, color='black')
-        subax.set_xlabel(r'Effective energy, MeV', fontsize=14, color='black')
+        ax.set_ylabel(r'G$\delta$E [cm$^2$ sr MeV]', fontsize=DEFAULT_AXIS_LABEL_SIZE, color='black')
+        subax.set_xlabel(r'Effective energy [MeV]', fontsize=DEFAULT_AXIS_LABEL_SIZE, color='black')
     gamma_steps_ = geometric_factors.shape[0]
     energy_steps_ = geometric_factors.shape[1]
 
@@ -72,7 +76,16 @@ def plot_multi_geometric(geometric_factors, response_data,
     ax.plot([np.full(gamma_steps_, energy_grid_plot['midpt'][jj]) for jj in range(energy_steps_)],
             geometric_factors.T)
 
-    ax.plot(response_data['grid']['midpt'], response_data['resp'], c='b')
+    # Initialize a parallel y-axis for which to plot the response function
+    ax1 = ax.twinx()
+
+    # Plotting the response function and setting the axis
+    ax1.set_yscale("log")
+    ax1.tick_params(which="both", direction="in", color=RESPONSE_AXIS_COLOR, labelcolor=RESPONSE_AXIS_COLOR)
+    ax1.set_ylabel(r"Response [cm$^2$ sr]", color=RESPONSE_AXIS_COLOR, fontsize=DEFAULT_AXIS_LABEL_SIZE)
+    ax1.plot(response_data['grid']['midpt'], response_data['resp'], c=RESPONSE_AXIS_COLOR)
+
+    # These for the lower panel ->
     non_zero_geof = np.mean(geometric_factors, axis=0) > 0
     means_ = np.mean(np.log(geometric_factors[:, non_zero_geof]), axis=0) + 1E-124
     stddev_ = np.std((geometric_factors[:, non_zero_geof]), axis=0) / np.exp(means_)
@@ -81,13 +94,13 @@ def plot_multi_geometric(geometric_factors, response_data,
     subax.plot(energy_grid_plot['midpt'][non_zero_geof], stddev_, c="r")
     subax.set_ylim(0, 5)
     subax.grid(True, which='both', alpha=0.3, zorder=0)
-    subax.set_ylabel(r'$\sigma$', fontsize=14, color='black')
+    subax.set_ylabel(r'$\sigma$', fontsize=DEFAULT_AXIS_LABEL_SIZE, color='black')
     subax.set_xlim(emin, emax)
     ax.set_xlim(emin, emax)
     ax.set_ylim(gmin, gmax)
 
     if isinstance(channel, str):
-        ax.set_title(f"{channel} response function and bowtie", fontsize=18)
+        ax.set_title(f"{channel} response function and bowtie", fontsize=DEFAULT_TITLE_FONTSIZE)
     if integral:
         fname_ = save_path + 'Gint_np_{0:s}.png'.format(saveidx)
     else:

@@ -121,7 +121,6 @@ venv.bak/
 # Icon must ends with two \r.
 Icon
 
-
 # Thumbnails
 ._*
 
@@ -259,3 +258,6 @@ asv_results
 html
 results
 result_images
+
+# My sandbox (Christian)
+ideal_channel.ipynb
