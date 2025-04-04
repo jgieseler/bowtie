@@ -21,7 +21,7 @@ This analysis tool runs a bow-tie analysis ([Van Allen et al. 1974](https://doi.
 1. This tool requires a recent Python (>=3.10) installation. [Following SunPy's approach, we recommend installing Python via miniforge (click for instructions).](https://docs.sunpy.org/en/stable/tutorial/installation.html#installing-python)
 2. [Download this file](https://github.com/spearhead-he/bowtie/archive/refs/heads/main.zip) and extract to a folder of your choice (or clone the repository [https://github.com/spearhead-he/bowtie](https://github.com/spearhead-he/bowtie) if you know how to use `git`).
 3. Open a terminal or the miniforge prompt and move to the directory where the code is.
-4. Create a new virtual environment (e.g., `conda create --name bowtie` or `python -m venv venv_bowtie_tool` if you don't use miniforge/conda) and activate it (e.g., `conda activate bowtie`, or `source venv_bowtie_tool/bin/activate` if you don't use miniforge/conda).
+4. Create a new virtual environment (e.g., `conda create --name bowtie python=3.12` or `python -m venv venv_bowtie_tool` if you don't use miniforge/conda) and activate it (e.g., `conda activate bowtie`, or `source venv_bowtie_tool/bin/activate` if you don't use miniforge/conda).
 5. Install the Python dependencies from the *requirements.txt* file with `pip install -r requirements.txt` within the virtual environment.
 6. Open the Jupyter Notebook by running `jupyter-lab bowtie_example.ipynb`
 
