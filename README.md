@@ -18,6 +18,12 @@ This analysis tool runs a bow-tie analysis ([Van Allen et al. 1974](https://doi.
 
 ## How to install
 
+### Access online (JupyterHub)
+
+You can access the complete bow-tie analysis tool online on the JupyterHub server of the SPEARHEAD project. All you need is a (free) [GitHub account](https://github.com/signup) for verification. [Access the tool by opening this link!](https://jupyterhub.spearhead-he.eu/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fspearhead-he%2Fbowtie&urlpath=lab%2Ftree%2Fbowtie%2Fbowtie_example.ipynb&branch=main)
+
+### Install locally
+
 1. This tool requires a recent Python (>=3.10) installation. [Following SunPy's approach, we recommend installing Python via miniforge (click for instructions).](https://docs.sunpy.org/en/stable/tutorial/installation.html#installing-python)
 2. [Download this file](https://github.com/spearhead-he/bowtie/archive/refs/heads/main.zip) and extract to a folder of your choice (or clone the repository [https://github.com/spearhead-he/bowtie](https://github.com/spearhead-he/bowtie) if you know how to use `git`).
 3. Open a terminal or the miniforge prompt and move to the directory where the code is.
