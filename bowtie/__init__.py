@@ -40,9 +40,17 @@ class Bowtie:
         self.energy_max = energy_max
 
     def bowtie_analysis(self, channel:str, spectra:Spectra, plot:bool=False,
-                        geom_factor_confidence:float=0.9) -> dict:
+                        geom_factor_confidence:float=0.9, integral_bowtie:bool=None) -> dict:
         """
         Runs bowtie analysis to a channel.
+
+        Parameters:
+        -----------
+        channel : {str}
+        spectra : {bowtie.Spectra}
+        plot : {bool}
+        geom_factor_confidence : {float} Float between 0-1.
+        integral_bowtie : {bool}
         """
 
         # Check that the channel is valid
@@ -60,6 +68,10 @@ class Bowtie:
         if not hasattr(spectra, "power_law_spectra"):
             raise AttributeError("Produce power law spectra with Spectra.produce_power_law_spectra() to calculate bowtie!")
 
+        # Use the default choice for integral bowtie if not provided
+        if integral_bowtie is None:
+            integral_bowtie = self.integral_bowtie
+
         # The bowtie_results are in order:
         # Geometric factor (G \Delta E) in cm2srMeV : {float}
         # Geometric factor errors : {dict} with keys ["gfup", "gflo"]
@@ -69,7 +81,7 @@ class Bowtie:
         # if plot, also returns fig and axes
         bowtie_results = bowtie_calc.calculate_bowtie_gf(response_data=response_dict, model_spectra=spectra.power_law_spectra,
                                                     emin=self.energy_min, emax=self.energy_max,
-                                                    gamma_index_steps=spectra.gamma_steps, use_integral_bowtie=self.integral_bowtie,
+                                                    gamma_index_steps=spectra.gamma_steps, use_integral_bowtie=integral_bowtie,
                                                     sigma=self.sigma, plot=plot, gfactor_confidence_level=geom_factor_confidence,
                                                     return_gf_stddev=True, channel=channel)
 

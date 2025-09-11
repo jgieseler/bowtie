@@ -204,6 +204,17 @@ def fold_spectrum_np(*, grid=None, spectrum=None, response=None):
         return 0
 
 
+def integrate_spectrum(grid:np.ndarray, spectrum:np.ndarray):
+    """
+    Integrates a given lower-law spectrum over given energy grid.
+    """
+
+    if len(grid["midpt"]) == len(spectrum):
+        result = np.trapezoid(spectrum, grid["midpt"])
+    else:
+        result = np.nan
+    return result
+
 def calculate_bowtie_gf(response_data,
                         model_spectra,
                         emin=0.01, emax=1000,
@@ -246,16 +257,25 @@ def calculate_bowtie_gf(response_data,
 
     for model_spectrum_idx, model_spectrum in enumerate(model_spectra):
 
+        # This spectral_folding_int is the folded spectrum, that appears in the nominator of 
+        # both the integral and differential bowtie analysis equations.
         spectral_folding_int = fold_spectrum_np(grid=response_data['grid'],
                                                 spectrum=model_spectrum['spect'],
                                                 response=response_data['resp'])
-        # TODO response error margin!
-        if use_integral_bowtie:
-            spectrum_data = model_spectrum['intsp']
-        else:
-            spectrum_data = model_spectrum['spect']
 
-        multi_geometric_factors[model_spectrum_idx, index_emin:index_emax] = spectral_folding_int / spectrum_data[index_emin:index_emax]
+        # An identical model spectrum may be used for the differential and integral bowtie analyses
+        spectrum_data = model_spectrum['spect']
+
+        if use_integral_bowtie:
+
+            # For integral bowtie the denominar is the spectrum integrated over energy
+            integrated_spectrum_data = integrate_spectrum(grid=response_data["grid"][index_emin:index_emax],
+                                                          spectrum=spectrum_data[index_emin:index_emax])
+
+            multi_geometric_factors[model_spectrum_idx, index_emin:index_emax] = np.divide(spectral_folding_int,integrated_spectrum_data)
+
+        else:
+            multi_geometric_factors[model_spectrum_idx, index_emin:index_emax] = spectral_folding_int / spectrum_data[index_emin:index_emax]
 
     # Create a discrete standard deviation vector for each energy in the grid.
     # This standard deviation is normalized to the local mean, so that a measure of spreading of points is obtained.
