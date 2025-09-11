@@ -1,9 +1,5 @@
 ### Python: https://raw.githubusercontent.com/github/gitignore/master/Python.gitignore
 
-# Personal
-bowtie.ipynb
-*response_functions.csv
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -260,4 +256,6 @@ results
 result_images
 
 # My sandbox (Christian)
+bowtie_development.ipynb
 ideal_channel.ipynb
+*response_functions.csv
