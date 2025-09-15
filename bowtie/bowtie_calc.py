@@ -43,6 +43,7 @@ def plot_multi_geometric(geometric_factors, response_data,
     :param save_path: Base path for saving the plot
     :type save_path: basestring
     :channel : {str} optional. Adds channel to the title of the figure if provided.
+    :integral_bowtie : {bool} optional. Changes the label on the y-axis.
     """
     energy_grid_plot = response_data['grid']
     plu.setup_latex(rcParams)
@@ -204,20 +205,34 @@ def fold_spectrum_np(*, grid=None, spectrum=None, response=None):
         return 0
 
 
-def integrate_spectrum(grid:np.ndarray, spectrum:np.ndarray):
+def integrate_spectrum(grid:np.ndarray, spectrum:np.ndarray, integration_start:float=None):
     """
-    Integrates a given lower-law spectrum over given energy grid.
+    Integrates a given power-law spectrum over given energy grid.
+    Returns the Int(spectrum)dE
+
+    Parameters:
+    -----------
+    grid : {np.ndarray}
+    spectrum : {np.ndarray}
+    integration_start : {float} optional. The starting value for integration in units of the grid.
     """
 
-    if len(grid["midpt"]) == len(spectrum):
-        result = np.trapezoid(spectrum, grid["midpt"])
+    # Seek the index corresponding to the 
+    if isinstance(integration_start,(float, np.float64)):
+        start_idx = np.searchsorted(grid, integration_start)
+        grid = grid[start_idx:]
+        spectrum = spectrum[start_idx:]
+
+    if len(grid) == len(spectrum):
+        result = np.trapezoid(spectrum, grid)
     else:
-        result = np.nan
+        print("len(grid) != len(spectrum)")
+        result = np.zeros(len(grid))
     return result
 
 def calculate_bowtie_gf(response_data,
                         model_spectra,
-                        emin=0.01, emax=1000,
+                        emin=0.01, emax=1000.,
                         gamma_index_steps=100,
                         use_integral_bowtie=False,
                         sigma=3,
@@ -240,8 +255,8 @@ def calculate_bowtie_gf(response_data,
     :type emax: float
     :param gamma_index_steps:
     :type gamma_index_steps:
-    :param use_integral_bowtie:
-    :type use_integral_bowtie:
+    :param use_integral_bowtie: A switch between differential and integral bowtie calculation.
+    :type use_integral_bowtie: bool
     :param sigma: Cutoff sigma value for the energy margin.
     :type sigma: float
     :return: (The geometric factor, the effective energy, lower margin for the effective energy, upper margin for the effective energy)
@@ -253,46 +268,38 @@ def calculate_bowtie_gf(response_data,
     index_emin = np.searchsorted(energy_grid_local, emin)  # search for an index corresponding to start energy
     index_emax = np.searchsorted(energy_grid_local, emax)
     multi_geometric_factors = np.zeros((gamma_index_steps, response_data['grid']['nstep']), dtype=float)
-    # for each model spectrum do the folding.
 
+    # For each model spectrum do the folding.
     for model_spectrum_idx, model_spectrum in enumerate(model_spectra):
-
-        # This spectral_folding_int is the folded spectrum, that appears in the nominator of 
-        # both the integral and differential bowtie analysis equations.
-        spectral_folding_int = fold_spectrum_np(grid=response_data['grid'],
-                                                spectrum=model_spectrum['spect'],
-                                                response=response_data['resp'])
 
         # An identical model spectrum may be used for the differential and integral bowtie analyses
         spectrum_data = model_spectrum['spect']
 
-        if use_integral_bowtie:
+        # This spectral_folding_int is the folded spectrum, that appears in the nominator of 
+        # both the integral and differential bowtie analysis equations.
+        spectral_folding_int = fold_spectrum_np(grid=response_data['grid'],
+                                                spectrum=spectrum_data,
+                                                response=response_data['resp'])
 
-            # For integral bowtie the denominar is the spectrum integrated over energy
-            integrated_spectrum_data = integrate_spectrum(grid=response_data["grid"][index_emin:index_emax],
-                                                          spectrum=spectrum_data[index_emin:index_emax])
-
-            multi_geometric_factors[model_spectrum_idx, index_emin:index_emax] = np.divide(spectral_folding_int,integrated_spectrum_data)
-
-        else:
-            multi_geometric_factors[model_spectrum_idx, index_emin:index_emax] = spectral_folding_int / spectrum_data[index_emin:index_emax]
+        multi_geometric_factors[model_spectrum_idx, index_emin:index_emax] = spectral_folding_int / spectrum_data[index_emin:index_emax]
 
     # Create a discrete standard deviation vector for each energy in the grid.
     # This standard deviation is normalized to the local mean, so that a measure of spreading of points is obtained.
     # Mathematically, this implies normalization of the random variable to its mean.
     non_zero_gf = np.mean(multi_geometric_factors, axis=0) > 0
     multi_geometric_factors_usable = multi_geometric_factors[:, non_zero_gf]
-    # print(len(multi_geometric_factors), len(multi_geometric_factors_usable))
     means = np.exp(np.mean(np.log(multi_geometric_factors_usable), axis=0))  # logarithmic mean of geometric factor curves by energy bin
 
     # Cross-channel contamination: PE4 causes ValueError: zero-size array to reduction operation minimum which has no identity for 
     # gf_stddev_norm = gf_stddev / np.min(gf_stddev)
-    # For now, 2024-08-23 I'll replace the normed stddev with a negative tenth (It should never be a negative number). 
+    # For now, 2024-08-23 I'll replace the normed stddev with a negativee tenth (It should never be a negative number). 
     try : 
         gf_stddev_abs = np.std(multi_geometric_factors_usable, axis=0)
         gf_stddev = gf_stddev_abs / means
         gf_stddev_norm = gf_stddev / np.min(gf_stddev)
-    except ValueError:
+    except ValueError as value_error:
+        print(f"Channel: {response_data['name']} caused a ValueError:")
+        print(value_error)
         gf_stddev_norm = -1e-1
 
     bowtie_cross_index = np.argmin(gf_stddev_norm)  # The minimal standard deviation point - bowtie crossing point.
@@ -306,15 +313,25 @@ def calculate_bowtie_gf(response_data,
         (channel_energy_low) = optimize.bisect(stddev_interpolator,
                                                energy_grid_local[non_zero_gf][0],
                                                energy_grid_local[non_zero_gf][bowtie_cross_index])  # to the left of bowtie_cross_index
-    except ValueError:
-        channel_energy_low = 0
+    except ValueError as value_error:
+        print(value_error)
+        # The first value of the interpolator function may be negative for an unkown reason. This happened for E5 channel on 2025-08-21.
+        # It seems that trying again from the next index (so 1 instead of 0 which is the first) can fix this problem. The underlying cause 
+        # for the negative value of the interpolator function (stddev_interpolator) in the first index still remains a a mystery to me,
+        # but at this time I'll take the solution and won't pursue the root of the issue. -Christian
+        (channel_energy_low) = optimize.bisect(stddev_interpolator,
+                                               energy_grid_local[non_zero_gf][1],
+                                               energy_grid_local[non_zero_gf][bowtie_cross_index])  # to the left of bowtie_cross_index
 
     try:
         (channel_energy_high) = optimize.bisect(stddev_interpolator,
                                                 energy_grid_local[non_zero_gf][bowtie_cross_index],
                                                 energy_grid_local[non_zero_gf][-1])  # to the right of bowtie_cross_index
-    except ValueError:
-        channel_energy_high = 0
+    except ValueError as value_error:
+        print(value_error)
+        (channel_energy_high) = optimize.bisect(stddev_interpolator,
+                                                energy_grid_local[non_zero_gf][bowtie_cross_index],
+                                                energy_grid_local[non_zero_gf][-2])  # to the right of bowtie_cross_index
 
     # gf = np.mean(multi_geometric_factors_usable, axis = 0)  # Average geometric factor for all model spectra
     # gf_cross = gf[bowtie_cross_index]  # The mean geometric factor for the bowtie crossing point
@@ -322,9 +339,49 @@ def calculate_bowtie_gf(response_data,
     gf_cross = geometric_mean(multi_geometric_factors_usable[:, bowtie_cross_index])
     energy_cross = energy_grid_local[bowtie_cross_index]
 
+    # For integral bowtie, the "energy_cross", which is the effective energy, is the starting point
+    # of integration for the spectrum integral in the denominator of the equation
+    if use_integral_bowtie:
+
+        # For each model spectrum do the folding.
+        for model_spectrum_idx, model_spectrum in enumerate(model_spectra):
+
+            # An identical model spectrum may be used for the differential and integral bowtie analyses
+            spectrum_data = model_spectrum['spect']
+
+            # This spectral_folding_int is the folded spectrum, that appears in the nominator of 
+            # both the integral and differential bowtie analysis equations.
+            spectral_folding_int = fold_spectrum_np(grid=response_data['grid'],
+                                                    spectrum=spectrum_data,
+                                                    response=response_data['resp'])
+
+            # For integral bowtie the denominar is the spectrum integrated over energy
+            integrated_spectrum = integrate_spectrum(grid=energy_grid_local,
+                                                     spectrum=spectrum_data,
+                                                     integration_start=energy_cross)
+
+            multi_geometric_factors[model_spectrum_idx, index_emin:index_emax] = np.divide(spectral_folding_int,integrated_spectrum)
+
+        # Redefine the multi_geometric_factors_usable for the constant GFs
+        non_zero_gf = np.mean(multi_geometric_factors, axis=0) > 0
+        multi_geometric_factors_usable = multi_geometric_factors[:, non_zero_gf]
+        means = np.exp(np.mean(np.log(multi_geometric_factors_usable), axis=0))
+
+        try: 
+            gf_stddev_abs = np.std(multi_geometric_factors_usable, axis=0)
+            gf_stddev = gf_stddev_abs / means
+            gf_stddev_norm = gf_stddev / np.min(gf_stddev)
+        except ValueError as value_error:
+            print(f"Channel: {response_data['name']} caused a ValueError:")
+            print(value_error)
+            gf_stddev_norm = -1e-1
+
+        bowtie_cross_index = np.argmin(gf_stddev_norm)  # The minimal standard deviation point - bowtie crossing point.
+        gf_cross = geometric_mean(multi_geometric_factors_usable[:, bowtie_cross_index])
+
     if plot:
         fig, axes = plot_multi_geometric(geometric_factors=multi_geometric_factors, response_data=response_data,
-                             emin=emin, emax=emax, gmin=1E-5, gmax=10, channel=channel)
+                             emin=emin, emax=emax, gmin=1E-5, gmax=10, channel=channel, integral=use_integral_bowtie)
 
     if return_gf_stddev:
         gf_upper = np.quantile(multi_geometric_factors_usable[:, bowtie_cross_index], gfactor_confidence_level)
