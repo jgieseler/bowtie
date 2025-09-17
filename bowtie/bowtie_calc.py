@@ -272,7 +272,7 @@ def calculate_bowtie_gf(response_data,
 
     # For integral bowtie, generate also integral spectra
     if use_integral_bowtie:
-        integral_spectra = generate_integral_powerlaw_np(energy_grid=energy_grid_local,
+        spectra.produce_integral_power_law_spectra(energy_grid=energy_grid_local,
                                                          )
 
     # For each model spectrum do the folding.

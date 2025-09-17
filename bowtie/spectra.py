@@ -36,7 +36,34 @@ class Spectra:
         self.gamma_max = gamma_max
 
 
-    def produce_power_law_spectra(self, response_df) -> None:
+    def produce_power_law_spectra(self, response_df=None, energy_grid=None) -> None:
+        """
+        Produces a list of spectra, that are needed for bowtie analysis.
+
+        Saves a list of dictionaries containing values for each spectrum to a class attribute "power_law_spectra".
+        """
+
+        # The incident energies are needed in a specific format, which is taken care of here.
+        if response_df is not None:
+            response_matrix = bowtie_util.assemble_response_matrix(response_df=response_df)
+            grid = response_matrix[0]["grid"]
+
+        elif energy_grid is not None:
+            grid = energy_grid
+
+        else:
+            raise TypeError("Either 'response_df' or 'energy_grid' must be provided!")
+
+        # Generates the power law spectra
+        power_law_spectra = bowtie_calc.generate_exppowlaw_spectra(energy_grid_dict=grid, gamma_pow_min=self.gamma_min,
+                                                              gamma_pow_max=self.gamma_max, num_steps=self.gamma_steps,
+                                                              cutoff_energy=self.cutoff_energy)
+
+        # Save the produced power law spectra to class attribute for easy access later.
+        self.power_law_spectra = power_law_spectra
+    
+
+    def produce_integral_power_law_spectra(self, response_df) -> None:
         """
         Produces a list of spectra, that are needed for bowtie analysis.
 
