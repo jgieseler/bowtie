@@ -88,8 +88,9 @@ class Bowtie:
                                                     return_gf_stddev=True, channel=channel)
 
         # Collect the results to a dictionary for easier handling
+        energy_id = "effective_energy" if not integral_bowtie else "threshold_energy"
         result_dict = {}
-        result_names = ["geometric_factor", "geometric_factor_errors", "effective_energy",\
+        result_names = ["geometric_factor", "geometric_factor_errors", energy_id,\
                         "effective_lower_boundary", "effective_upper_boundary"]
         
         # Attach effective lower and upper boundary to class attributes. Let's not return them

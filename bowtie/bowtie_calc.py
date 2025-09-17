@@ -137,16 +137,40 @@ def generate_pwlaw_spectra(energy_grid_dict,
     return model_spectra
 
 
+def generate_integral_pwlaw_spectra(energy_grid_dict:dict,
+                           gamma_pow_min:float=-3.5, gamma_pow_max:float=-1.5,
+                           num_steps:int=100):
+    """
+    Generates integral powerlaw spectra.
+    """
+    integral_spectra = []
+    gamma_range = np.linspace(gamma_pow_min, gamma_pow_max, num=num_steps, endpoint=True)
+
+    for power_law_gamma in gamma_range:
+        integral_spectra.append({
+            'gamma': power_law_gamma,
+            'spect': generate_integral_powerlaw_np(energy_grid=energy_grid_dict,
+                                                    power_index=power_law_gamma)
+        })
+    return integral_spectra
+
+
 def generate_exppowlaw_spectra(energy_grid_dict,
                                gamma_pow_min=-3.5, gamma_pow_max=-1.5,
                                num_steps=100, use_integral_bowtie=False,
                                cutoff_energy=1.0):
-    model_spectra = []  # generate exponential cutoff power-law spectra for folding
+    """
+    Generates exponential cutoff power-law spectra for folding
+    """
+
+    model_spectra = []
+    gamma_range = np.linspace(gamma_pow_min, gamma_pow_max, num=num_steps, endpoint=True)
+
     if use_integral_bowtie:
-        print("Integral bowtie is not yet implemented!")
+        print("Integral power law spectrum with exp-cutoff not implemented!")
         return None
     else:
-        for power_law_gamma in np.linspace(gamma_pow_min, gamma_pow_max, num=num_steps, endpoint=True):
+        for power_law_gamma in gamma_range:
             spectrum = 1.0 * np.power(energy_grid_dict['midpt'], power_law_gamma) * \
                        np.exp(-cutoff_energy / (energy_grid_dict['midpt'] - cutoff_energy))
 
@@ -159,18 +183,18 @@ def generate_exppowlaw_spectra(energy_grid_dict,
     return model_spectra
 
 
-def generate_integral_powerlaw_np(*, energy_grid=None,
-                                  power_index=-3.5, sp_norm=1.0):
+def generate_integral_powerlaw_np(energy_grid:dict=None,
+                                  power_index=-3.5):
     """
-
+    Produces a single integral power law spectrum for a given spectral index
+    in a given energy space.
     :param energy_grid:
     :param power_index:
-    :param sp_norm:
     :return:
     """
+
     if energy_grid is not None:
-        spectrum = - sp_norm * np.power(energy_grid['enlow'], power_index + 1) / (power_index + 1)
-        return spectrum
+        return - 1. * np.power(energy_grid, power_index + 1) / (power_index + 1)
     else:
         return None
 
@@ -272,8 +296,8 @@ def calculate_bowtie_gf(response_data,
 
     # For integral bowtie, generate also integral spectra
     if use_integral_bowtie:
-        spectra.produce_integral_power_law_spectra(energy_grid=energy_grid_local,
-                                                         )
+        spectra.produce_integral_power_law_spectra(energy_grid=energy_grid_local)
+        integral_spectra = spectra.integral_spectra
 
     # For each model spectrum do the folding.
     for model_spectrum_idx, model_spectrum in enumerate(model_spectra):
@@ -287,7 +311,11 @@ def calculate_bowtie_gf(response_data,
                                                 spectrum=spectrum_data,
                                                 response=response_data['resp'])
 
-        multi_geometric_factors[model_spectrum_idx, index_emin:index_emax] = spectral_folding_int / spectrum_data[index_emin:index_emax]
+        if use_integral_bowtie:
+            integral_spectrum = integral_spectra[model_spectrum_idx]["spect"]
+            multi_geometric_factors[model_spectrum_idx, index_emin:index_emax] = spectral_folding_int / integral_spectrum[index_emin:index_emax]
+        else:
+            multi_geometric_factors[model_spectrum_idx, index_emin:index_emax] = spectral_folding_int / spectrum_data[index_emin:index_emax]
 
     # Create a discrete standard deviation vector for each energy in the grid.
     # This standard deviation is normalized to the local mean, so that a measure of spreading of points is obtained.

@@ -5,6 +5,8 @@ This file contains the Spectra class that is used to run bowtie analysis.
 __author__ = "Christian Palmroos"
 __credits__ = ["Christian Palmroos", "Philipp Oleynik"]
 
+import numpy as np
+
 from . import bowtie_util
 from . import bowtie_calc 
 
@@ -63,21 +65,18 @@ class Spectra:
         self.power_law_spectra = power_law_spectra
     
 
-    def produce_integral_power_law_spectra(self, response_df) -> None:
+    def produce_integral_power_law_spectra(self, energy_grid:np.ndarray) -> None:
         """
         Produces a list of spectra, that are needed for bowtie analysis.
 
         Saves a list of dictionaries containing values for each spectrum to a class attribute "power_law_spectra".
         """
 
-        # The incident energies are needed in a specific format, which is taken care of here.
-        response_matrix = bowtie_util.assemble_response_matrix(response_df=response_df)
-        grid = response_matrix[0]["grid"]
-
         # Generates the power law spectra
-        power_law_spectra = bowtie_calc.generate_exppowlaw_spectra(energy_grid_dict=grid, gamma_pow_min=self.gamma_min,
-                                                              gamma_pow_max=self.gamma_max, num_steps=self.gamma_steps,
-                                                              cutoff_energy=self.cutoff_energy)
+        integral_spectra = bowtie_calc.generate_integral_pwlaw_spectra(energy_grid_dict=energy_grid, 
+                                                                    gamma_pow_min=self.gamma_min,
+                                                                    gamma_pow_max=self.gamma_max, 
+                                                                    num_steps=self.gamma_steps)
 
         # Save the produced power law spectra to class attribute for easy access later.
-        self.power_law_spectra = power_law_spectra
+        self.integral_spectra = integral_spectra
