@@ -81,9 +81,9 @@ class Bowtie:
         # The channel effective lower boundary in MeV : {float} 
         # The channel effective upper boundary in MeV : {float}
         # if plot, also returns fig and axes
-        bowtie_results = bowtie_calc.calculate_bowtie_gf(response_data=response_dict, model_spectra=spectra.power_law_spectra,
+        bowtie_results = bowtie_calc.calculate_bowtie_gf(response_data=response_dict, spectra=spectra,
                                                     emin=self.energy_min, emax=self.energy_max,
-                                                    gamma_index_steps=spectra.gamma_steps, use_integral_bowtie=integral_bowtie,
+                                                    use_integral_bowtie=integral_bowtie,
                                                     sigma=self.sigma, plot=plot, gfactor_confidence_level=geom_factor_confidence,
                                                     return_gf_stddev=True, channel=channel)
 
