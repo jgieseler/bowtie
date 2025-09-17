@@ -80,3 +80,4 @@ class Spectra:
 
         # Save the produced power law spectra to class attribute for easy access later.
         self.integral_spectra = integral_spectra
+

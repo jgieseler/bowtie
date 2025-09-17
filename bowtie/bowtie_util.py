@@ -177,7 +177,7 @@ def save_results(results, filename, column_names=None, save_figures=False):
         column_names = [column_names]
 
     if column_names is None:
-        columns_names = range(len(results))
+        column_names = range(len(results))
 
     data = np.empty((len(INDICES),len(results)))
     # Loop through the list of results:
@@ -186,7 +186,11 @@ def save_results(results, filename, column_names=None, save_figures=False):
         data[0,i] = res["geometric_factor"]
         data[1,i] = res["geometric_factor_errors"]["gfup"]
         data[2,i] = res["geometric_factor_errors"]["gflo"]
-        data[3,i] = res["effective_energy"]
+        try:
+            data[3,i] = res["effective_energy"]
+        except KeyError:
+            print("At least one integral bowtie result in the results. The threshold energy will appear in the 'effective_energy' column.")
+            data[3,i] = res["threshold_energy"]
         
         if save_figures:
             
