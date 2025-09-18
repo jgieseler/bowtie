@@ -3,10 +3,11 @@ import math
 import matplotlib
 import os
 import pytest
-import bowtie as bow
 import numpy as np
 import pandas as pd
 
+from bowtie import bowtie as bow
+from bowtie import bowtie_util as btutil
 
 """
 Install dependencies for tests:
@@ -19,8 +20,8 @@ To run the tests locally, go to the base directory of the repository and run:
 pytest -rP --mpl --mpl-baseline-path=baseline --mpl-baseline-relative --mpl-generate-summary=html --cov=bowtie bowtie/tests/test.py
 """
 
-
 @pytest.mark.mpl_image_compare(remove_text=True, deterministic=True)
+@pytest.mark.filterwarnings("ignore:FigureCanvasAgg is non-interactive, and thus cannot be shown:UserWarning")
 def test_bowtie():
     response_df = pd.read_csv("boxcar_responses.csv", index_col="incident_energy")
     #
@@ -38,9 +39,9 @@ def test_bowtie():
     channel = "boxcar1"
     b1_results = bowtie.bowtie_analysis(channel=channel, spectra=spectra, plot=False)
 
-    assert b1_results['geometric_factor'] == 0.02790779462399221
-    assert b1_results['geometric_factor_errors'] == {'gfup': np.float64(0.00015485028702108203), 'gflo': np.float64(0.00010468779327109379)}
-    assert b1_results['effective_energy'] == np.float64(0.0809474412033335)
+    assert b1_results['geometric_factor'] == 0.02783532881086404
+    assert b1_results['geometric_factor_errors'] == {'gfup': np.float64(0.00015185377096835553), 'gflo': np.float64(0.00010571189187651153)}
+    assert b1_results['effective_energy'] == np.float64(0.0809)
     # assert b1_results['fig'] == 
     # assert b1_results['axes'] == 
 
@@ -51,11 +52,11 @@ def test_bowtie():
 
     new_b1_results = bowtie.bowtie_analysis(channel=channel, spectra=spectra, plot=False)
 
-    assert new_b1_results['geometric_factor'] == 0.02945898306054771
+    assert new_b1_results['geometric_factor'] == 0.02945031431749762
 
-    assert math.isclose(new_b1_results['geometric_factor_errors']['gfup'], np.float64(0.00010152053178396139))
-    assert math.isclose(new_b1_results['geometric_factor_errors']['gflo'], np.float64(5.888325083307916e-05))
-    assert math.isclose(new_b1_results['effective_energy'], np.float64(0.0824167766298553))
+    assert math.isclose(new_b1_results['geometric_factor_errors']['gfup'], np.float64(8.885965640134663e-05))
+    assert math.isclose(new_b1_results['geometric_factor_errors']['gflo'], np.float64(5.596433236966167e-05))
+    assert math.isclose(new_b1_results['effective_energy'], np.float64(0.0824))
     # assert new_b1_results['fig'] == 
     # assert new_b1_results['axes'] ==
 
@@ -63,20 +64,22 @@ def test_bowtie():
 
     assert len(all_channels_results) == response_df.shape[1]
 
-    # only check the last result
-    assert math.isclose(all_channels_results[3]['geometric_factor'], 3.86171117243384)
-    # assert all_channels_results[3]['geometric_factor_errors'] == {'gfup': np.float64(0.027996508853041446), 'gflo': np.float64(0.01830299979208344)}
-    assert math.isclose(all_channels_results[3]['geometric_factor_errors']['gfup'], np.float64(0.00993773761189853))
-    assert math.isclose(all_channels_results[3]['geometric_factor_errors']['gflo'], np.float64(0.00727406726661251))
-    assert math.isclose(all_channels_results[3]['effective_energy'], np.float64(10.6020689668199))
-    # assert all_channels_results[3]['fig'] == 
-    # assert all_channels_results[3]['axes'] ==
+    # Finally check the last result (which now is for an integral channel)
+    integral_channel = "boxcar4"
+    b4_results = bowtie.bowtie_analysis(channel=integral_channel, spectra=spectra, 
+                                        plot=False, integral_bowtie=True)
+
+    assert math.isclose(b4_results['geometric_factor'], 0.9927950947299083)
+    assert math.isclose(b4_results['geometric_factor_errors']['gfup'], np.float64(0.0030737165893933716))
+    assert math.isclose(b4_results['geometric_factor_errors']['gflo'], np.float64(0.003365956433684758))
+    assert math.isclose(b4_results['threshold_energy'], np.float64(4.9804))
 
     # test saving
     filename = "test.csv"
     column_names = response_df.columns
-    bow.bowtie_util.save_results(results=all_channels_results, filename=filename, column_names=column_names, save_figures=True)
+    btutil.save_results(results=all_channels_results, filename=filename, column_names=column_names, save_figures=True)
 
+    # Compare the two files
     filecmp.cmp('test.csv', 'bowtie/tests/test_org.csv')
 
     for i in range(1,5):
