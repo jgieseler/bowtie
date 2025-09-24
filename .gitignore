@@ -257,6 +257,7 @@ result_images
 
 # My sandbox (Christian)
 _development/
+sixsp_bowtie/
 bowtie_development.ipynb
 ideal_channel.ipynb
 *response_functions.csv

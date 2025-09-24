@@ -264,7 +264,8 @@ def calculate_bowtie_gf(response_data,
                         plot=False,
                         gfactor_confidence_level=0.9,
                         return_gf_stddev=False,
-                        channel:str=None):
+                        channel:str=None,
+                        enable_warnings:bool=False):
     """
     Calculates the bowtie geometric factor for a single channel
     :param return_gf_box: True if the margin of the channel geometric factor is requested.
@@ -285,18 +286,28 @@ def calculate_bowtie_gf(response_data,
     :return: (The geometric factor, the effective energy, lower margin for the effective energy, upper margin for the effective energy)
     :rtype: list
     :channel : {str} optional. Adds channel id to plot if both enabled.
+    :enable_warnings : {bool} optional. Enables prints of errors catched during runtime.
     """
-    energy_grid_local = response_data['grid']['midpt']
 
-    index_emin = np.searchsorted(energy_grid_local, emin)  # search for an index corresponding to start energy
-    index_emax = np.searchsorted(energy_grid_local, emax)
+    # The global energy grid is the whole energy grid that the user gives as an input
+    energy_grid_global = response_data['grid']['midpt']
+
+    # Search for an indices corresponding to start and stop energy
+    index_emin = np.searchsorted(energy_grid_global, emin)
+    index_emax = np.searchsorted(energy_grid_global, emax)
+
+    # The local energy grid represents the selection of the whole energy grid that we consider
+    energy_grid_local = energy_grid_global[index_emin:index_emax]
+
+    # Initialize an empty array for geometric factor values to be filled with
     multi_geometric_factors = np.zeros((spectra.gamma_steps, response_data['grid']['nstep']), dtype=float)
 
+    # The ensemble of spectra that are used for the convolution of a spectrum and the response function
     model_spectra = spectra.power_law_spectra
 
     # For integral bowtie, generate also integral spectra
     if use_integral_bowtie:
-        spectra.produce_integral_power_law_spectra(energy_grid=energy_grid_local)
+        spectra.produce_integral_power_law_spectra(energy_grid=energy_grid_global)
         integral_spectra = spectra.integral_spectra
 
     # For each model spectrum do the folding.
@@ -327,13 +338,14 @@ def calculate_bowtie_gf(response_data,
     # Cross-channel contamination: PE4 causes ValueError: zero-size array to reduction operation minimum which has no identity for 
     # gf_stddev_norm = gf_stddev / np.min(gf_stddev)
     # For now, 2024-08-23 I'll replace the normed stddev with a negativee tenth (It should never be a negative number). 
-    try : 
+    try: 
         gf_stddev_abs = np.std(multi_geometric_factors_usable, axis=0)
         gf_stddev = gf_stddev_abs / means
         gf_stddev_norm = gf_stddev / np.min(gf_stddev)
     except ValueError as value_error:
-        print(f"Channel: {response_data['name']} caused a ValueError:")
-        print(value_error)
+        if enable_warnings:
+            print(f"Channel: {response_data['name']} caused a ValueError:")
+            print(value_error)
         gf_stddev_norm = -1e-1
 
     bowtie_cross_index = np.argmin(gf_stddev_norm)  # The minimal standard deviation point - bowtie crossing point.
@@ -342,34 +354,47 @@ def calculate_bowtie_gf(response_data,
     # The discrete standard deviation is normalized to 1 in the minimum, so that 1.0 must be subtracted
     # before sigma level to make a discrete "equation" for the the interpolator because
     # the optimize.bisect looks for zeroes of a function, which is the interpolator.
-    stddev_interpolator = interpolate.interp1d(energy_grid_local[non_zero_gf], gf_stddev_norm - 1.0 - sigma)
+    stddev_interpolator = interpolate.interp1d(energy_grid_global[non_zero_gf], gf_stddev_norm - 1.0 - sigma)
     try:
-        (channel_energy_low) = optimize.bisect(stddev_interpolator,
-                                               energy_grid_local[non_zero_gf][0],
-                                               energy_grid_local[non_zero_gf][bowtie_cross_index])  # to the left of bowtie_cross_index
+        channel_energy_low = optimize.bisect(stddev_interpolator,
+                                               energy_grid_global[non_zero_gf][0],
+                                               energy_grid_global[non_zero_gf][bowtie_cross_index])  # to the left of bowtie_cross_index
     except ValueError as value_error:
-        print(value_error)
+        if enable_warnings:
+            print(value_error)
         # The first value of the interpolator function may be negative for an unkown reason. This happened for E5 channel on 2025-08-21.
         # It seems that trying again from the next index (so 1 instead of 0 which is the first) can fix this problem. The underlying cause 
         # for the negative value of the interpolator function (stddev_interpolator) in the first index still remains a a mystery to me,
         # but at this time I'll take the solution and won't pursue the root of the issue. -Christian
-        (channel_energy_low) = optimize.bisect(stddev_interpolator,
-                                               energy_grid_local[non_zero_gf][1],
-                                               energy_grid_local[non_zero_gf][bowtie_cross_index])  # to the left of bowtie_cross_index
+        try:
+            channel_energy_low = optimize.bisect(stddev_interpolator,
+                                                energy_grid_global[non_zero_gf][1],
+                                                energy_grid_global[non_zero_gf][bowtie_cross_index])  # to the left of bowtie_cross_index
+        except ValueError as value_error:
+            if enable_warnings:
+                print(value_error)
+            print("scipy.optimize was not able to find a root for the interpolator function with the given energy range. Channel lower energy boundary could not be determined.")
+            channel_energy_low = np.nan
 
     try:
-        (channel_energy_high) = optimize.bisect(stddev_interpolator,
-                                                energy_grid_local[non_zero_gf][bowtie_cross_index],
-                                                energy_grid_local[non_zero_gf][-1])  # to the right of bowtie_cross_index
+        channel_energy_high = optimize.bisect(stddev_interpolator,
+                                                energy_grid_global[non_zero_gf][bowtie_cross_index],
+                                                energy_grid_global[non_zero_gf][-1])  # to the right of bowtie_cross_index
     except ValueError as value_error:
-        print(value_error)
-        (channel_energy_high) = optimize.bisect(stddev_interpolator,
-                                                energy_grid_local[non_zero_gf][bowtie_cross_index],
-                                                energy_grid_local[non_zero_gf][-2])  # to the right of bowtie_cross_index
+        if enable_warnings:
+            print(value_error)
+        try:
+            channel_energy_high = optimize.bisect(stddev_interpolator,
+                                                    energy_grid_global[non_zero_gf][bowtie_cross_index],
+                                                    energy_grid_global[non_zero_gf][-2])  # to the right of bowtie_cross_index
+        except ValueError as value_error:
+            if enable_warnings:
+                print(value_error)
+            print("scipy.optimize was not able to find a root for the interpolator function with the given energy range. Channel higher energy boundary could not be determined.")
+            channel_energy_high = np.nan
 
     # gf = np.mean(multi_geometric_factors_usable, axis = 0)  # Average geometric factor for all model spectra
     # gf_cross = gf[bowtie_cross_index]  # The mean geometric factor for the bowtie crossing point
-
     gf_cross = geometric_mean(multi_geometric_factors_usable[:, bowtie_cross_index])
     energy_cross = energy_grid_local[bowtie_cross_index]
 
