@@ -8,9 +8,9 @@ __credits__ = ["Christian Palmroos", "Philipp Oleynik"]
 import numpy as np
 import pandas as pd
 
-from matplotlib import pyplot as plt
+# from matplotlib import pyplot as plt
 
-from . import bowtie_calc
+# from . import bowtie_calc
 
 
 def read_npy_vault(vault_name):
@@ -111,7 +111,7 @@ def calculate_response_matrix(particles_shot, particles_response, energy_grid:di
     else:
         step = 1
         if contamination:
-            channel_names = ["O", "EP1", "EP2", "EP3", "EP4", "EP5", "EP6", "EP7", "PE1", "PE2", "PE3", "PE4"]
+            channel_names = ["O", "EP1", "EP2", "EP3", "EP4", "EP5", "EP6", "EP7", "PE1", "PE2", "PE3", "PE4", "PE5", "PE6", "PE7", "PE8", "PE9"]
 
         # The normal case: no summing channels and no contamination.
         else:
@@ -125,6 +125,7 @@ def calculate_response_matrix(particles_shot, particles_response, energy_grid:di
 
         if not sum_channels:
             resp_cache = particles_response[:, i, side] * normalize_to_area
+            resp_error = np.sqrt(particles_response[:, i, side]) * normalize_to_area
 
         else:
             if i < channel_stop-1:
@@ -133,13 +134,15 @@ def calculate_response_matrix(particles_shot, particles_response, energy_grid:di
 
                 # Sum element-wise over the slices of the two channels
                 resp_cache = np.add(resp_cache1, resp_cache2)
+                resp_error = np.sqrt(np.add(particles_response[:, i, side],particles_response[:, i+1, side])) * normalize_to_area
             else:
                 resp_cache = particles_response[:, i, side] * normalize_to_area
 
         response_matrix.append({
-            "name": channel_names[i],
-            "grid": energy_grid,
-            "resp": resp_cache,  # The channel response
+            "name"  : channel_names[i],
+            "grid"  : energy_grid,
+            "resp"  : resp_cache,  # The channel response
+            "error" : resp_error
         })
 
     return response_matrix
@@ -174,7 +177,7 @@ def save_results(results, filename, column_names=None, save_figures=False):
         column_names = [column_names]
 
     if column_names is None:
-        columns_names = range(len(results))
+        column_names = range(len(results))
 
     data = np.empty((len(INDICES),len(results)))
     # Loop through the list of results:
@@ -183,7 +186,11 @@ def save_results(results, filename, column_names=None, save_figures=False):
         data[0,i] = res["geometric_factor"]
         data[1,i] = res["geometric_factor_errors"]["gfup"]
         data[2,i] = res["geometric_factor_errors"]["gflo"]
-        data[3,i] = res["effective_energy"]
+        try:
+            data[3,i] = res["effective_energy"]
+        except KeyError:
+            print("At least one integral bowtie result in the results. The threshold energy will appear in the 'effective_energy' column.")
+            data[3,i] = res["threshold_energy"]
         
         if save_figures:
             

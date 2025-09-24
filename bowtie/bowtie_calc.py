@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from statistics import geometric_mean
 
+from .spectra import Spectra
 from . import plotutil as plu
 
 RESPONSE_AXIS_COLOR = "blue"
@@ -43,6 +44,7 @@ def plot_multi_geometric(geometric_factors, response_data,
     :param save_path: Base path for saving the plot
     :type save_path: basestring
     :channel : {str} optional. Adds channel to the title of the figure if provided.
+    :integral_bowtie : {bool} optional. Changes the label on the y-axis.
     """
     energy_grid_plot = response_data['grid']
     plu.setup_latex(rcParams)
@@ -135,16 +137,40 @@ def generate_pwlaw_spectra(energy_grid_dict,
     return model_spectra
 
 
+def generate_integral_pwlaw_spectra(energy_grid_dict:dict,
+                           gamma_pow_min:float=-3.5, gamma_pow_max:float=-1.5,
+                           num_steps:int=100):
+    """
+    Generates integral powerlaw spectra.
+    """
+    integral_spectra = []
+    gamma_range = np.linspace(gamma_pow_min, gamma_pow_max, num=num_steps, endpoint=True)
+
+    for power_law_gamma in gamma_range:
+        integral_spectra.append({
+            'gamma': power_law_gamma,
+            'spect': generate_integral_powerlaw_np(energy_grid=energy_grid_dict,
+                                                    power_index=power_law_gamma)
+        })
+    return integral_spectra
+
+
 def generate_exppowlaw_spectra(energy_grid_dict,
                                gamma_pow_min=-3.5, gamma_pow_max=-1.5,
                                num_steps=100, use_integral_bowtie=False,
                                cutoff_energy=1.0):
-    model_spectra = []  # generate exponential cutoff power-law spectra for folding
+    """
+    Generates exponential cutoff power-law spectra for folding
+    """
+
+    model_spectra = []
+    gamma_range = np.linspace(gamma_pow_min, gamma_pow_max, num=num_steps, endpoint=True)
+
     if use_integral_bowtie:
-        print("Integral bowtie is not yet implemented!")
+        print("Integral power law spectrum with exp-cutoff not implemented!")
         return None
     else:
-        for power_law_gamma in np.linspace(gamma_pow_min, gamma_pow_max, num=num_steps, endpoint=True):
+        for power_law_gamma in gamma_range:
             spectrum = 1.0 * np.power(energy_grid_dict['midpt'], power_law_gamma) * \
                        np.exp(-cutoff_energy / (energy_grid_dict['midpt'] - cutoff_energy))
 
@@ -157,18 +183,18 @@ def generate_exppowlaw_spectra(energy_grid_dict,
     return model_spectra
 
 
-def generate_integral_powerlaw_np(*, energy_grid=None,
-                                  power_index=-3.5, sp_norm=1.0):
+def generate_integral_powerlaw_np(energy_grid:dict=None,
+                                  power_index=-3.5):
     """
-
+    Produces a single integral power law spectrum for a given spectral index
+    in a given energy space.
     :param energy_grid:
     :param power_index:
-    :param sp_norm:
     :return:
     """
+
     if energy_grid is not None:
-        spectrum = - sp_norm * np.power(energy_grid['enlow'], power_index + 1) / (power_index + 1)
-        return spectrum
+        return - 1. * np.power(energy_grid, power_index + 1) / (power_index + 1)
     else:
         return None
 
@@ -204,16 +230,42 @@ def fold_spectrum_np(*, grid=None, spectrum=None, response=None):
         return 0
 
 
+def integrate_spectrum(grid:np.ndarray, spectrum:np.ndarray, integration_start:float=None):
+    """
+    Integrates a given power-law spectrum over given energy grid.
+    Returns the Int(spectrum)dE
+
+    Parameters:
+    -----------
+    grid : {np.ndarray}
+    spectrum : {np.ndarray}
+    integration_start : {float} optional. The starting value for integration in units of the grid.
+    """
+
+    # Seek the index corresponding to the 
+    if isinstance(integration_start,(float, np.float64)):
+        start_idx = np.searchsorted(grid, integration_start)
+        grid = grid[start_idx:]
+        spectrum = spectrum[start_idx:]
+
+    # Return the integral function of the spectrum, not the area under its curve.
+    if len(grid) == len(spectrum):
+        result = np.trapezoid(spectrum, grid)
+    else:
+        print("len(grid) != len(spectrum)")
+        result = np.zeros(len(grid))
+    return result
+
 def calculate_bowtie_gf(response_data,
-                        model_spectra,
-                        emin=0.01, emax=1000,
-                        gamma_index_steps=100,
+                        spectra:Spectra,
+                        emin=0.01, emax=1000.,
                         use_integral_bowtie=False,
                         sigma=3,
                         plot=False,
                         gfactor_confidence_level=0.9,
                         return_gf_stddev=False,
-                        channel:str=None):
+                        channel:str=None,
+                        enable_warnings:bool=False):
     """
     Calculates the bowtie geometric factor for a single channel
     :param return_gf_box: True if the margin of the channel geometric factor is requested.
@@ -221,58 +273,79 @@ def calculate_bowtie_gf(response_data,
     :param response_data: The response data for the channel.
     :type response_data: A dictionary, must have 'grid', the energy_grid_data (dictionary, see make_energy_grid),
                          and 'resp', the channel response (an array of a length of energy_grid_data['nstep'])
-    :param model_spectra: The model spectra for the analysis.
-    :type model_spectra: A dictionary (see generate_pwlaw_spectra)
+    :param spectra: The Spectra object that contains the model spectra.
+    :type spectra: Spectra class contained in this software
     :param emin: the minimal energy to consider
     :type emin: float
     :param emax: the maximum energy to consider
     :type emax: float
-    :param gamma_index_steps:
-    :type gamma_index_steps:
-    :param use_integral_bowtie:
-    :type use_integral_bowtie:
+    :param use_integral_bowtie: A switch between differential and integral bowtie calculation.
+    :type use_integral_bowtie: bool
     :param sigma: Cutoff sigma value for the energy margin.
     :type sigma: float
     :return: (The geometric factor, the effective energy, lower margin for the effective energy, upper margin for the effective energy)
     :rtype: list
     :channel : {str} optional. Adds channel id to plot if both enabled.
+    :enable_warnings : {bool} optional. Enables prints of errors catched during runtime.
     """
-    energy_grid_local = response_data['grid']['midpt']
 
-    index_emin = np.searchsorted(energy_grid_local, emin)  # search for an index corresponding to start energy
-    index_emax = np.searchsorted(energy_grid_local, emax)
-    multi_geometric_factors = np.zeros((gamma_index_steps, response_data['grid']['nstep']), dtype=float)
-    # for each model spectrum do the folding.
+    # The global energy grid is the whole energy grid that the user gives as an input
+    energy_grid_global = response_data['grid']['midpt']
 
+    # Search for an indices corresponding to start and stop energy
+    index_emin = np.searchsorted(energy_grid_global, emin)
+    index_emax = np.searchsorted(energy_grid_global, emax)
+
+    # The local energy grid represents the selection of the whole energy grid that we consider
+    energy_grid_local = energy_grid_global[index_emin:index_emax]
+
+    # Initialize an empty array for geometric factor values to be filled with
+    multi_geometric_factors = np.zeros((spectra.gamma_steps, response_data['grid']['nstep']), dtype=float)
+
+    # The ensemble of spectra that are used for the convolution of a spectrum and the response function
+    model_spectra = spectra.power_law_spectra
+
+    # For integral bowtie, generate also integral spectra
+    if use_integral_bowtie:
+        spectra.produce_integral_power_law_spectra(energy_grid=energy_grid_global)
+        integral_spectra = spectra.integral_spectra
+
+    # For each model spectrum do the folding.
     for model_spectrum_idx, model_spectrum in enumerate(model_spectra):
 
-        spectral_folding_int = fold_spectrum_np(grid=response_data['grid'],
-                                                spectrum=model_spectrum['spect'],
-                                                response=response_data['resp'])
-        # TODO response error margin!
-        if use_integral_bowtie:
-            spectrum_data = model_spectrum['intsp']
-        else:
-            spectrum_data = model_spectrum['spect']
+        # An identical model spectrum may be used for the differential and integral bowtie analyses
+        spectrum_data = model_spectrum['spect']
 
-        multi_geometric_factors[model_spectrum_idx, index_emin:index_emax] = spectral_folding_int / spectrum_data[index_emin:index_emax]
+        # This spectral_folding_int is the folded spectrum, that appears in the nominator of 
+        # both the integral and differential bowtie analysis equations.
+        spectral_folding_int = fold_spectrum_np(grid=response_data['grid'],
+                                                spectrum=spectrum_data,
+                                                response=response_data['resp'])
+
+        if use_integral_bowtie:
+            integral_spectrum = integral_spectra[model_spectrum_idx]["spect"]
+            multi_geometric_factors[model_spectrum_idx, index_emin:index_emax] = spectral_folding_int / integral_spectrum[index_emin:index_emax]
+        else:
+            multi_geometric_factors[model_spectrum_idx, index_emin:index_emax] = spectral_folding_int / spectrum_data[index_emin:index_emax]
 
     # Create a discrete standard deviation vector for each energy in the grid.
     # This standard deviation is normalized to the local mean, so that a measure of spreading of points is obtained.
     # Mathematically, this implies normalization of the random variable to its mean.
     non_zero_gf = np.mean(multi_geometric_factors, axis=0) > 0
     multi_geometric_factors_usable = multi_geometric_factors[:, non_zero_gf]
-    # print(len(multi_geometric_factors), len(multi_geometric_factors_usable))
     means = np.exp(np.mean(np.log(multi_geometric_factors_usable), axis=0))  # logarithmic mean of geometric factor curves by energy bin
 
     # Cross-channel contamination: PE4 causes ValueError: zero-size array to reduction operation minimum which has no identity for 
     # gf_stddev_norm = gf_stddev / np.min(gf_stddev)
-    # For now, 2024-08-23 I'll replace the normed stddev with a negative tenth (It should never be a negative number). 
-    try : 
+    # For now, 2024-08-23 I'll replace the normed stddev with a negativee tenth (It should never be a negative number). 
+    try: 
         gf_stddev_abs = np.std(multi_geometric_factors_usable, axis=0)
         gf_stddev = gf_stddev_abs / means
         gf_stddev_norm = gf_stddev / np.min(gf_stddev)
-    except ValueError:
+    except ValueError as value_error:
+        if enable_warnings:
+            print(f"Channel: {response_data['name']} caused a ValueError:")
+            print(value_error)
         gf_stddev_norm = -1e-1
 
     bowtie_cross_index = np.argmin(gf_stddev_norm)  # The minimal standard deviation point - bowtie crossing point.
@@ -281,30 +354,53 @@ def calculate_bowtie_gf(response_data,
     # The discrete standard deviation is normalized to 1 in the minimum, so that 1.0 must be subtracted
     # before sigma level to make a discrete "equation" for the the interpolator because
     # the optimize.bisect looks for zeroes of a function, which is the interpolator.
-    stddev_interpolator = interpolate.interp1d(energy_grid_local[non_zero_gf], gf_stddev_norm - 1.0 - sigma)
+    stddev_interpolator = interpolate.interp1d(energy_grid_global[non_zero_gf], gf_stddev_norm - 1.0 - sigma)
     try:
-        (channel_energy_low) = optimize.bisect(stddev_interpolator,
-                                               energy_grid_local[non_zero_gf][0],
-                                               energy_grid_local[non_zero_gf][bowtie_cross_index])  # to the left of bowtie_cross_index
-    except ValueError:
-        channel_energy_low = 0
+        channel_energy_low = optimize.bisect(stddev_interpolator,
+                                               energy_grid_global[non_zero_gf][0],
+                                               energy_grid_global[non_zero_gf][bowtie_cross_index])  # to the left of bowtie_cross_index
+    except ValueError as value_error:
+        if enable_warnings:
+            print(value_error)
+        # The first value of the interpolator function may be negative for an unkown reason. This happened for E5 channel on 2025-08-21.
+        # It seems that trying again from the next index (so 1 instead of 0 which is the first) can fix this problem. The underlying cause 
+        # for the negative value of the interpolator function (stddev_interpolator) in the first index still remains a a mystery to me,
+        # but at this time I'll take the solution and won't pursue the root of the issue. -Christian
+        try:
+            channel_energy_low = optimize.bisect(stddev_interpolator,
+                                                energy_grid_global[non_zero_gf][1],
+                                                energy_grid_global[non_zero_gf][bowtie_cross_index])  # to the left of bowtie_cross_index
+        except ValueError as value_error:
+            if enable_warnings:
+                print(value_error)
+            print("scipy.optimize was not able to find a root for the interpolator function with the given energy range. Channel lower energy boundary could not be determined.")
+            channel_energy_low = np.nan
 
     try:
-        (channel_energy_high) = optimize.bisect(stddev_interpolator,
-                                                energy_grid_local[non_zero_gf][bowtie_cross_index],
-                                                energy_grid_local[non_zero_gf][-1])  # to the right of bowtie_cross_index
-    except ValueError:
-        channel_energy_high = 0
+        channel_energy_high = optimize.bisect(stddev_interpolator,
+                                                energy_grid_global[non_zero_gf][bowtie_cross_index],
+                                                energy_grid_global[non_zero_gf][-1])  # to the right of bowtie_cross_index
+    except ValueError as value_error:
+        if enable_warnings:
+            print(value_error)
+        try:
+            channel_energy_high = optimize.bisect(stddev_interpolator,
+                                                    energy_grid_global[non_zero_gf][bowtie_cross_index],
+                                                    energy_grid_global[non_zero_gf][-2])  # to the right of bowtie_cross_index
+        except ValueError as value_error:
+            if enable_warnings:
+                print(value_error)
+            print("scipy.optimize was not able to find a root for the interpolator function with the given energy range. Channel higher energy boundary could not be determined.")
+            channel_energy_high = np.nan
 
     # gf = np.mean(multi_geometric_factors_usable, axis = 0)  # Average geometric factor for all model spectra
     # gf_cross = gf[bowtie_cross_index]  # The mean geometric factor for the bowtie crossing point
-
     gf_cross = geometric_mean(multi_geometric_factors_usable[:, bowtie_cross_index])
     energy_cross = energy_grid_local[bowtie_cross_index]
 
     if plot:
         fig, axes = plot_multi_geometric(geometric_factors=multi_geometric_factors, response_data=response_data,
-                             emin=emin, emax=emax, gmin=1E-5, gmax=10, channel=channel)
+                             emin=emin, emax=emax, gmin=1E-5, gmax=10, channel=channel, integral=use_integral_bowtie)
 
     if return_gf_stddev:
         gf_upper = np.quantile(multi_geometric_factors_usable[:, bowtie_cross_index], gfactor_confidence_level)
