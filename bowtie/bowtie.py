@@ -115,8 +115,8 @@ class Bowtie:
         return result_dict
 
 
-    def bowtie_analysis_full_stack(self, spectra, plot:bool=False,
-                                   geom_factor_confidence:float=0.9) -> list[dict]:
+    def bowtie_analysis_full_stack(self, spectra:Spectra, plot:bool=False,
+                                   geom_factor_confidence:float=0.9, bowtie_method:str="differential") -> list[dict]:
         """
         Wrapper for bowtie_analysis(). Runs bowtie_analysis() for all of the 
         given channels in bowtie.data
@@ -127,7 +127,7 @@ class Bowtie:
         for channel in self.data.columns:
 
             new_result = self.bowtie_analysis(channel=channel, spectra=spectra, plot=plot,
-                                              geom_factor_confidence=geom_factor_confidence)
+                                              geom_factor_confidence=geom_factor_confidence, bowtie_method=bowtie_method)
 
             all_bowtie_results.append(new_result)
 
