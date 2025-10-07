@@ -8,10 +8,6 @@ __credits__ = ["Christian Palmroos", "Philipp Oleynik"]
 import numpy as np
 import pandas as pd
 
-# from matplotlib import pyplot as plt
-
-# from . import bowtie_calc
-
 
 def read_npy_vault(vault_name):
     """
@@ -86,7 +82,9 @@ def calculate_response_matrix(particles_shot, particles_response, energy_grid:di
                              channel_start:int, channel_stop:int,
                              contamination:bool=False, sum_channels:bool=False):
     """
-    
+    This function only applies for BepiColombo / SIXS-P energy channel configuration, and should NOT be 
+    used for the calculation of any other particle instrument's response matrix.
+
     Parameters:
     -----------
     particles_shot : {np.ndarray}
@@ -180,6 +178,7 @@ def save_results(results, filename, column_names=None, save_figures=False):
         column_names = range(len(results))
 
     data = np.empty((len(INDICES),len(results)))
+
     # Loop through the list of results:
     for i, res in enumerate(results):
         
