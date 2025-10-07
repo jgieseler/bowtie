@@ -19,7 +19,7 @@ def validate_response_df_and_grid(response_df:pd.DataFrame, energy_grid:np.ndarr
 
     # Neither was provided -> Error
     if response_df is None and energy_grid is None:
-        raise KeyError("Either the argument 'response_df' or 'energy_grid must be provided!")
+        raise KeyError("Either the argument 'response_df' or 'energy_grid' must be provided!")
 
     # energy_grid was not provided -> response_df must be a correct input
     elif energy_grid is None:

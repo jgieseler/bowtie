@@ -82,9 +82,9 @@ def calculate_response_matrix(particles_shot, particles_response, energy_grid:di
                              channel_start:int, channel_stop:int,
                              contamination:bool=False, sum_channels:bool=False):
     """
-    This function only applies for BepiColombo / SIXS-P energy chanel configuration, and should NOT be 
+    This function only applies for BepiColombo / SIXS-P energy channel configuration, and should NOT be 
     used for the calculation of any other particle instrument's response matrix.
-    
+
     Parameters:
     -----------
     particles_shot : {np.ndarray}

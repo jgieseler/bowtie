@@ -71,7 +71,11 @@ class Bowtie:
             if response["name"]==channel:
                 response_dict = response
 
-        use_integral_bowtie = False if bowtie_method=="differential" else True
+        # Choose the correct boolean switch to use in calculate_bowtie_gf()
+        if bowtie_method=="differential":
+            use_integral_bowtie = False
+        if bowtie_method=="integral":
+            use_integral_bowtie = True
 
         # The bowtie_results are in order:
         # Geometric factor (G \Delta E) in cm2srMeV : {float}
