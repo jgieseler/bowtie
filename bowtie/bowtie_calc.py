@@ -407,7 +407,7 @@ def calculate_bowtie_gf(response_data,
         gf_lower = np.quantile(multi_geometric_factors_usable[:, bowtie_cross_index], 1 - gfactor_confidence_level)
 
         if plot:
-            return gf_cross, {'gfup': gf_upper, 'gflo': gf_lower}, energy_cross, channel_energy_low, channel_energy_high, fig, axes
-        return gf_cross, {'gfup': gf_upper, 'gflo': gf_lower}, energy_cross, channel_energy_low, channel_energy_high 
+            return gf_cross, {'gfup': gf_upper, 'gflo': gf_lower}, energy_cross, {"eff_e_up" : channel_energy_high, "eff_e_lo" : channel_energy_low}, fig, axes
+        return gf_cross, {'gfup': gf_upper, 'gflo': gf_lower}, energy_cross, {"eff_e_up" : channel_energy_high, "eff_e_lo" : channel_energy_low}
 
-    return gf_cross, energy_cross, channel_energy_low, channel_energy_high
+    return gf_cross, energy_cross, {"eff_e_up" : channel_energy_high, "eff_e_lo" : channel_energy_low}
