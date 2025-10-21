@@ -162,7 +162,8 @@ def save_results(results, filename, column_names=None, save_figures=False):
     """
 
     # The indices (rows) of the output file
-    INDICES = ["geometric_factor", "gf_error_up", "gf_error_low", "effective_energy"]
+    INDICES = ["geometric_factor", "gf_error_up", "gf_error_low", "effective_energy",
+               "eff_e_error_up", "eff_e_error_low"]
     FIGNAME = "bowtie.png"
 
     # Make sure that results are a list of dictionaries to iterate over
@@ -185,12 +186,16 @@ def save_results(results, filename, column_names=None, save_figures=False):
         data[0,i] = res["geometric_factor"]
         data[1,i] = res["geometric_factor_errors"]["gfup"]
         data[2,i] = res["geometric_factor_errors"]["gflo"]
+
         try:
             data[3,i] = res["effective_energy"]
         except KeyError:
             print("At least one integral bowtie result in the results. The threshold energy will appear in the 'effective_energy' column.")
             data[3,i] = res["threshold_energy"]
-        
+
+        data[4,i] = res["effective_energy_errors"]["eff_e_up"]
+        data[5,i] = res["effective_energy_errors"]["eff_e_lo"]
+
         if save_figures:
             
             res["fig"].savefig(f"{column_names[i]}_{FIGNAME}", 
