@@ -94,11 +94,6 @@ class Bowtie:
         result_dict = {}
         result_names = ["geometric_factor", "geometric_factor_errors", energy_id,\
                         "effective_energy_errors"]
-        
-        # Attach effective lower and upper boundary to class attributes. Let's not return them
-        # in the dictionary to avoid confusion.
-        self.effective_energy_low = bowtie_results[3]
-        self.effective_energy_high = bowtie_results[4]
 
         if plot:
             result_names.append("fig")
