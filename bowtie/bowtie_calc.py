@@ -398,16 +398,21 @@ def calculate_bowtie_gf(response_data,
     gf_cross = geometric_mean(multi_geometric_factors_usable[:, bowtie_cross_index])
     energy_cross = energy_grid_local[bowtie_cross_index]
 
+    # Gets the order of magnitude (oom) for the geometric factor. Use it to adjust the axis limits in the plot
+    gf_cross_oom = np.floor(np.log10(gf_cross))
+
     if plot:
-        fig, axes = plot_multi_geometric(geometric_factors=multi_geometric_factors, response_data=response_data,
-                             emin=emin, emax=emax, gmin=1E-5, gmax=10, channel=channel, integral=use_integral_bowtie)
+        fig, axes = plot_multi_geometric(geometric_factors=multi_geometric_factors, 
+                                         response_data=response_data, emin=emin, emax=emax, 
+                                         gmin=np.power(10,gf_cross_oom-3), gmax=np.power(10,gf_cross_oom+3), 
+                                         channel=channel, integral=use_integral_bowtie)
 
     if return_gf_stddev:
         gf_upper = np.quantile(multi_geometric_factors_usable[:, bowtie_cross_index], gfactor_confidence_level)
         gf_lower = np.quantile(multi_geometric_factors_usable[:, bowtie_cross_index], 1 - gfactor_confidence_level)
 
         if plot:
-            return gf_cross, {'gfup': gf_upper, 'gflo': gf_lower}, energy_cross, channel_energy_low, channel_energy_high, fig, axes
-        return gf_cross, {'gfup': gf_upper, 'gflo': gf_lower}, energy_cross, channel_energy_low, channel_energy_high 
+            return gf_cross, {'gfup': gf_upper, 'gflo': gf_lower}, energy_cross, {"eff_e_up" : channel_energy_high, "eff_e_lo" : channel_energy_low}, fig, axes
+        return gf_cross, {'gfup': gf_upper, 'gflo': gf_lower}, energy_cross, {"eff_e_up" : channel_energy_high, "eff_e_lo" : channel_energy_low}
 
-    return gf_cross, energy_cross, channel_energy_low, channel_energy_high
+    return gf_cross, energy_cross, {"eff_e_up" : channel_energy_high, "eff_e_lo" : channel_energy_low}

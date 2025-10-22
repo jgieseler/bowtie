@@ -81,8 +81,7 @@ class Bowtie:
         # Geometric factor (G \Delta E) in cm2srMeV : {float}
         # Geometric factor errors : {dict} with keys ["gfup", "gflo"]
         # The effective energy of the channel in MeV : {float}
-        # The channel effective lower boundary in MeV : {float} 
-        # The channel effective upper boundary in MeV : {float}
+        # Effective energy errors : {dict} with keys ["eff_e_up", "eff_e_lo"]
         # if plot, also returns fig and axes
         bowtie_results = bowtie_calc.calculate_bowtie_gf(response_data=response_dict, spectra=spectra,
                                                     emin=self.energy_min, emax=self.energy_max,
@@ -94,12 +93,7 @@ class Bowtie:
         energy_id = "effective_energy" if bowtie_method=="differential" else "threshold_energy"
         result_dict = {}
         result_names = ["geometric_factor", "geometric_factor_errors", energy_id,\
-                        "effective_lower_boundary", "effective_upper_boundary"]
-        
-        # Attach effective lower and upper boundary to class attributes. Let's not return them
-        # in the dictionary to avoid confusion.
-        self.effective_energy_low = bowtie_results[3]
-        self.effective_energy_high = bowtie_results[4]
+                        "effective_energy_errors"]
 
         if plot:
             result_names.append("fig")
@@ -113,8 +107,13 @@ class Bowtie:
                 res["gflo"] -= bowtie_results[0]
                 res["gflo"] = -res["gflo"]
 
-            if result_names[i] not in ("effective_lower_boundary", "effective_upper_boundary"):
-                result_dict[result_names[i]] = res
+            # Handle effective energy error here:
+            if i==3:
+                res["eff_e_up"] -= bowtie_results[2]
+                res["eff_e_lo"] -= bowtie_results[2]
+                res["eff_e_lo"] *= -1
+
+            result_dict[result_names[i]] = res
 
         return result_dict
 
