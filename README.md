@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/901850215.svg)](https://doi.org/10.5281/zenodo.14505386)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.14505386-blue)](https://doi.org/10.5281/zenodo.14505386)
 [![Python versions](https://img.shields.io/badge/python-3.10_--_3.14-blue)]()
 [![pytest](https://github.com/spearhead-he/bowtie/actions/workflows/pytest.yml/badge.svg?branch=main)](https://github.com/spearhead-he/bowtie/actions/workflows/pytest.yml)
 [![codecov](https://codecov.io/github/spearhead-he/bowtie/graph/badge.svg?token=JZ0QJ7PUU6)](https://codecov.io/github/spearhead-he/bowtie)
