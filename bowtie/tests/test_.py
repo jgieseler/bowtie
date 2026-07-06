@@ -8,16 +8,17 @@ import pandas as pd
 
 from bowtie import bowtie as bow
 from bowtie import bowtie_util as btutil
+from bowtie.tests.helpers import strip_figure_text
 
 """
 Install dependencies for tests:
 pip install flake8 pytest pytest-doctestplus pytest-cov pytest-mpl
 
 To create/update the baseline images, run the following command from the base package dir:
-pytest --mpl-generate-path=bowtie/tests/baseline bowtie/tests/test.py
+pytest --mpl-generate-path=bowtie/tests/baseline bowtie/tests/test_.py
 
 To run the tests locally, go to the base directory of the repository and run:
-pytest -rP --mpl --mpl-baseline-path=baseline --mpl-baseline-relative --mpl-generate-summary=html --cov=bowtie bowtie/tests/test.py
+pytest -rP --mpl --mpl-baseline-path=baseline --mpl-baseline-relative --mpl-generate-summary=html --cov=bowtie bowtie/tests/test_.py
 """
 
 @pytest.mark.mpl_image_compare(remove_text=True, deterministic=True)
@@ -86,4 +87,6 @@ def test_bowtie():
         assert os.path.exists(f'boxcar{i}_bowtie.png')
 
     # return last produced fig for mpl pytest
-    return all_channels_results[3]['fig']
+
+    # Strip before returning — don't rely solely on remove_text=True
+    return strip_figure_text(all_channels_results[3]['fig'])
