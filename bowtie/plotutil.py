@@ -5,6 +5,7 @@ A module for plotting utility functions.
 __author__ = "Philipp Oleynik"
 __credits__ = ["Philipp Oleynik"]
 
+import matplotlib
 import matplotlib.patches as pt
 import matplotlib.pyplot as plt
 
@@ -25,7 +26,10 @@ def setup_latex(rcParams, no_fourier=False):
         rcParams['figure.dpi'] = 120
         rcParams['savefig.dpi'] = 300
         rcParams['savefig.bbox'] = 'tight'
-        rcParams['text.hinting_factor'] = 1
+        if matplotlib.__version_info__ < (3, 11):
+            rcParams['text.hinting_factor'] = 1
+        else:
+            rcParams['text.hinting'] = 'none'
 
 
 def setup_plotstyle(rcParams):
