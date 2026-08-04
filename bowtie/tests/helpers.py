@@ -1,4 +1,3 @@
-# tests/helpers.py
 def strip_figure_text(fig):
     """
     Remove all text elements that vary across matplotlib versions,
@@ -6,6 +5,8 @@ def strip_figure_text(fig):
     shifts (e.g. ±1 px height differences between mpl versions).
     Use before returning a figure in mpl_image_compare tests.
     """
+    import matplotlib
+
     # --- Remove all text artists ---
     fig.suptitle('')
     for text in fig.texts:
@@ -30,6 +31,12 @@ def strip_figure_text(fig):
             fig.set_constrained_layout(False)
         except AttributeError:
             pass
+
+    # --- Disable tight savefig bbox ---
+    # setup_latex sets savefig.bbox='tight', which causes pytest-mpl to trim
+    # the figure at save time in a version-dependent way, overriding the
+    # pixel-snapping below and producing ±1 px differences across versions.
+    matplotlib.rcParams['savefig.bbox'] = None
 
     # --- Snap to integer pixel dimensions ---
     # Fractional inch*DPI values get rounded differently across versions,
