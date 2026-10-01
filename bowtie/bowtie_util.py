@@ -77,10 +77,10 @@ def assemble_response_matrix(response_df) ->list[dict]:
     return response_matrix
 
 
-def calculate_response_matrix(particles_shot, particles_response, energy_grid:dict,
-                             radiation_area:float, side:int,
-                             channel_start:int, channel_stop:int,
-                             contamination:bool=False, sum_channels:bool=False):
+def calculate_response_matrix_sixsp(particles_shot, particles_response, energy_grid:dict,
+                                radiation_area:float, side:int,
+                                channel_start:int, channel_stop:int,
+                                contamination:bool=False, sum_channels:bool=False):
     """
     This function only applies for BepiColombo / SIXS-P energy channel configuration, and should NOT be 
     used for the calculation of any other particle instrument's response matrix.
@@ -145,6 +145,52 @@ def calculate_response_matrix(particles_shot, particles_response, energy_grid:di
 
     return response_matrix
 
+
+def calculate_response_matrix_general(particles_shot, particles_response, energy_grid:dict,
+                                     radiation_area:float, channel_names:list|tuple,
+                                     contamination:bool=False, sum_channels:bool=False) -> list[dict]:
+    """
+    A general function for calculating the response matrix given an array_vaul.
+
+    Parameters:
+    -----------
+    particles_shot : {np.ndarray} with shape (N,)
+    particles_response : {np.ndarray} with shape (N,len(channel_names))
+    energy_grid : {dict}
+    radiation_area : {float}
+    channel_names : {list|tuple}
+
+    contamination : {bool} optional, default False
+    sum_channels : {bool} optional, default False
+    
+    Returns: 
+    --------
+    response_matrix : {list[dict]} 
+    """
+
+    if sum_channels:
+        raise NotImplementedError("Summing channels is not implemented for the general response matrix calculation.")
+
+    if contamination:
+        raise NotImplementedError("Contamination calculation is not implemented for the general response matrix calculation.")
+
+
+    response_matrix: list = []
+    normalize_to_area: float = 1.0 / ((particles_shot + 1) / radiation_area) * np.pi
+
+    for i, name in enumerate(channel_names):
+
+        resp_cache: np.ndarray = particles_response[:, i] * normalize_to_area
+        resp_error: np.ndarray = np.sqrt(particles_response[:, i]) * normalize_to_area
+
+        response_matrix.append({
+            "name"  : name,
+            "grid"  : energy_grid,
+            "resp"  : resp_cache,  # The channel response
+            "error" : resp_error
+        })
+
+    return response_matrix
 
 def save_results(results, filename, column_names=None, save_figures=False):
     """
