@@ -40,9 +40,10 @@ def test_bowtie():
     channel = "boxcar1"
     b1_results = bowtie.bowtie_analysis(channel=channel, spectra=spectra, plot=False)
 
-    assert b1_results['geometric_factor'] == 0.02783532881086404
-    assert b1_results['geometric_factor_errors'] == {'gfup': np.float64(0.00015185377096835553), 'gflo': np.float64(0.00010571189187651153)}
-    assert b1_results['effective_energy'] == np.float64(0.0809)
+    assert math.isclose(b1_results['geometric_factor'], np.float64(0.02783532881086404))
+    assert math.isclose(b1_results['geometric_factor_errors']['gfup'], np.float64(0.00015185377096835553))
+    assert math.isclose(b1_results['geometric_factor_errors']['gflo'], np.float64(0.00010571189187651153))
+    assert math.isclose(b1_results['effective_energy'], np.float64(np.float64(0.0809))
     # assert b1_results['fig'] == 
     # assert b1_results['axes'] == 
 
