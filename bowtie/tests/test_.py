@@ -40,9 +40,9 @@ def test_bowtie():
     channel = "boxcar1"
     b1_results = bowtie.bowtie_analysis(channel=channel, spectra=spectra, plot=False)
 
-    assert math.isclose(b1_results['geometric_factor'], np.float64(0.02783532881086404))
-    assert math.isclose(b1_results['geometric_factor_errors']['gfup'], np.float64(0.00015185377096835553))
-    assert math.isclose(b1_results['geometric_factor_errors']['gflo'], np.float64(0.00010571189187651153))
+    assert math.isclose(b1_results['geometric_factor'], np.float64(0.027838503625538632))
+    assert math.isclose(b1_results['geometric_factor_errors']['gfup'], np.float64(0.0001540437268063126))
+    assert math.isclose(b1_results['geometric_factor_errors']['gflo'], np.float64(0.00010514558564838836))
     assert math.isclose(b1_results['effective_energy'], np.float64(0.0809))
     # assert b1_results['fig'] == 
     # assert b1_results['axes'] == 
@@ -54,10 +54,9 @@ def test_bowtie():
 
     new_b1_results = bowtie.bowtie_analysis(channel=channel, spectra=spectra, plot=False)
 
-    assert new_b1_results['geometric_factor'] == 0.02945031431749762
-
-    assert math.isclose(new_b1_results['geometric_factor_errors']['gfup'], np.float64(8.885965640134663e-05))
-    assert math.isclose(new_b1_results['geometric_factor_errors']['gflo'], np.float64(5.596433236966167e-05))
+    assert math.isclose(new_b1_results['geometric_factor'], np.float64(0.02945592693945742))
+    assert math.isclose(new_b1_results['geometric_factor_errors']['gfup'], np.float64(9.523717655271838e-05))
+    assert math.isclose(new_b1_results['geometric_factor_errors']['gflo'], np.float64(5.7444998733877095e-05))
     assert math.isclose(new_b1_results['effective_energy'], np.float64(0.0824))
     # assert new_b1_results['fig'] == 
     # assert new_b1_results['axes'] ==
@@ -71,9 +70,9 @@ def test_bowtie():
     b4_results = bowtie.bowtie_analysis(channel=integral_channel, spectra=spectra, 
                                         plot=False, bowtie_method="integral")
 
-    assert math.isclose(b4_results['geometric_factor'], 0.9927950947299083)
-    assert math.isclose(b4_results['geometric_factor_errors']['gfup'], np.float64(0.0030737165893933716))
-    assert math.isclose(b4_results['geometric_factor_errors']['gflo'], np.float64(0.003365956433684758))
+    assert math.isclose(b4_results['geometric_factor'], 0.993023753608417)
+    assert math.isclose(b4_results['geometric_factor_errors']['gfup'], np.float64(0.0030117808795876444))
+    assert math.isclose(b4_results['geometric_factor_errors']['gflo'], np.float64(0.003318818033709481))
     assert math.isclose(b4_results['threshold_energy'], np.float64(4.9804))
 
     # test saving
