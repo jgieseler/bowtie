@@ -116,28 +116,43 @@ def plot_multi_geometric(geometric_factors, response_data,
         return fig, (ax, subax)
 
 
-def generate_pwlaw_spectra(energy_grid_dict,
-                           gamma_pow_min=-3.5, gamma_pow_max=-1.5,
-                           num_steps=100, use_integral_bowtie=False):
-    model_spectra = []  # generate power-law spectra for folding
+def generate_pwlaw_spectra(energy_grid:np.ndarray,
+                           gamma_pow_min:float=-3.5, gamma_pow_max:float=-1.5,
+                           num_steps:int=100,
+                           use_integral_bowtie:bool=False) -> list:
+    """
+    Generates power-law spectra.
+
+    Parameters:
+    -----------
+    energy_grid : {np.ndarray} Energy grid.
+    gamma_pow_min : {float} Minimum power-law index
+    gamma_pow_max : {float} Maximum power-law index
+    num_steps : {int} Number of steps between the minimum and maximum power-law index
+    use_integral_bowtie : {bool} If True, generates integral spectra. If False, generates differential spectra.
+    """
+
+    model_spectra: list = []
+    gamma_range = np.linspace(gamma_pow_min, gamma_pow_max, num=num_steps, endpoint=True)
+
     if use_integral_bowtie:
-        for power_law_gamma in np.linspace(gamma_pow_min, gamma_pow_max, num=num_steps, endpoint=True):
+        for power_law_gamma in gamma_range:
             model_spectra.append({
-                'gamma': power_law_gamma,
-                'spect': generate_powerlaw_np(energy_grid=energy_grid_dict, power_index=power_law_gamma),
-                'intsp': generate_integral_powerlaw_np(energy_grid=energy_grid_dict,
-                                                       power_index=power_law_gamma)
+                "gamma": power_law_gamma,
+                "spect": generate_powerlaw_np(energy_grid=energy_grid, power_law_gamma=power_law_gamma),
+                "intsp": generate_integral_powerlaw_np(energy_grid=energy_grid,
+                                                       power_law_gamma=power_law_gamma)
             })
     else:
-        for power_law_gamma in np.linspace(gamma_pow_min, gamma_pow_max, num=num_steps, endpoint=True):
+        for power_law_gamma in gamma_range:
             model_spectra.append({
-                'gamma': power_law_gamma,
-                'spect': generate_powerlaw_np(energy_grid=energy_grid_dict, power_index=power_law_gamma)
+                "gamma": power_law_gamma,
+                "spect": generate_powerlaw_np(energy_grid=energy_grid, power_law_gamma=power_law_gamma)
             })
     return model_spectra
 
 
-def generate_integral_pwlaw_spectra(energy_grid_dict:dict,
+def generate_integral_pwlaw_spectra(energy_grid:np.ndarray,
                            gamma_pow_min:float=-3.5, gamma_pow_max:float=-1.5,
                            num_steps:int=100):
     """
@@ -148,67 +163,72 @@ def generate_integral_pwlaw_spectra(energy_grid_dict:dict,
 
     for power_law_gamma in gamma_range:
         integral_spectra.append({
-            'gamma': power_law_gamma,
-            'spect': generate_integral_powerlaw_np(energy_grid=energy_grid_dict,
-                                                    power_index=power_law_gamma)
+            "gamma": power_law_gamma,
+            "spect": generate_integral_powerlaw_np(energy_grid=energy_grid,
+                                                    power_law_gamma=power_law_gamma)
         })
     return integral_spectra
 
 
-def generate_exppowlaw_spectra(energy_grid_dict,
+def generate_exppowlaw_spectra(energy_grid:np.ndarray,
                                gamma_pow_min=-3.5, gamma_pow_max=-1.5,
                                num_steps=100, use_integral_bowtie=False,
-                               cutoff_energy=1.0):
+                               cutoff_energy=1.0) -> list:
     """
     Generates exponential cutoff power-law spectra for folding
+
+    Parameters:
+    -----------
+    energy_grid : {np.ndarray} Energy grid.
+    gamma_pow_min : {float} Minimum power-law index
+    gamma_pow_max : {float} Maximum power-law index
+    num_steps : {int} Number of steps between the minimum and maximum power-law index
+    use_integral_bowtie : {bool} If True, generates integral spectra. If False, generates differential spectra.
+    cutoff_energy : {float} Cutoff energy in MeV. 
     """
 
-    model_spectra = []
+    model_spectra: list = []
     gamma_range = np.linspace(gamma_pow_min, gamma_pow_max, num=num_steps, endpoint=True)
 
+    print(f"Generating power-law spectra with exponential cutoff at energy {cutoff_energy} MeV.")
     if use_integral_bowtie:
-        print("Integral power law spectrum with exp-cutoff not implemented!")
-        return None
+        raise NotImplementedError("Integral power law spectrum with exp-cutoff not implemented!")
     else:
         for power_law_gamma in gamma_range:
-            spectrum = 1.0 * np.power(energy_grid_dict['midpt'], power_law_gamma) * \
-                       np.exp(-cutoff_energy / (energy_grid_dict['midpt'] - cutoff_energy))
 
-            index_cutoff = np.searchsorted(energy_grid_dict['midpt'], cutoff_energy)
-            np.put(spectrum, range(0, index_cutoff + 1), 1.0E-30)
+            power_law_part: np.ndarray = generate_powerlaw_np(energy_grid=energy_grid, power_law_gamma=power_law_gamma)
+            # exponential_part = np.exp(-cutoff_energy / (energy_grid_dict['midpt'] - cutoff_energy))
+            exponential_part: np.ndarray = np.exp(-energy_grid/cutoff_energy) if cutoff_energy > 0 else np.ones(len(energy_grid))
+            spectrum =  power_law_part * exponential_part
+
+            # index_cutoff = np.searchsorted(energy_grid_dict['midpt'], cutoff_energy)
+            # np.put(spectrum, range(0, index_cutoff + 1), 1.0E-30)
             model_spectra.append({
-                'gamma': power_law_gamma,
-                'spect': spectrum
+                "gamma": power_law_gamma,
+                "spect": spectrum
             })
     return model_spectra
 
 
-def generate_integral_powerlaw_np(energy_grid:dict=None,
-                                  power_index=-3.5):
+def generate_integral_powerlaw_np(energy_grid:np.ndarray,
+                                  power_law_gamma:float=-3.5):
     """
     Produces a single integral power law spectrum for a given spectral index
     in a given energy space.
     :param energy_grid:
-    :param power_index:
+    :param power_law_gamma:
     :return:
     """
-
-    if energy_grid is not None:
-        return - 1. * np.power(energy_grid, power_index + 1) / (power_index + 1)
-    else:
-        return None
+    return -1. * np.power(energy_grid, power_law_gamma + 1) / (power_law_gamma + 1)
 
 
-def generate_powerlaw_np(*, energy_grid=None, power_index=-2, sp_norm=1.0):
+def generate_powerlaw_np(energy_grid:np.ndarray, power_law_gamma:float):
     """
-
     :param energy_grid:
-    :param power_index:
-    :param sp_norm:
-    :return:
+    :param power_law_gamma:
+    :return: np.ndarray
     """
-    spectrum = sp_norm * np.power(energy_grid['midpt'], power_index)
-    return spectrum
+    return np.power(energy_grid, power_law_gamma)
 
 
 def fold_spectrum_np(*, grid=None, spectrum=None, response=None):

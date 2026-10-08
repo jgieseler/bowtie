@@ -30,17 +30,17 @@ class Bowtie:
         else:
             raise TypeError(f"Data needs to be a pandas dataframe, {type(data)} was passed!")
 
-        self.energy_min = energy_min
-        self.energy_max = energy_max
-        self.sigma = sigma
+        self.energy_min: float = energy_min
+        self.energy_max: float = energy_max
+        self.sigma: int = sigma
 
 
     def set_energy_range(self, energy_min:float, energy_max:float) -> None:
         """
         Sets the limits of the energy range.
         """
-        self.energy_min = energy_min
-        self.energy_max = energy_max
+        self.energy_min: float = energy_min
+        self.energy_max: float = energy_max
 
 
     def bowtie_analysis(self, channel:str, spectra:Spectra, plot:bool=False,
